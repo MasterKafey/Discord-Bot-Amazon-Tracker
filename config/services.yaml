@@ -1,0 +1,27 @@
+parameters:
+
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/Entity/'
+            - '../src/Kernel.php'
+
+    Discord\Discord:
+        factory: [ 'App\Factory\DiscordFactory', 'getDiscord' ]
+        arguments:
+            $discordBotToken: '%env(DISCORD_BOT_TOKEN)%'
+
+    _instanceof:
+        App\Discord\Command\AbstractDiscordCommand:
+            tags:
+                - { name: 'app.discord.command' }
+
+        App\Discord\EventListener\AbstractDiscordListener:
+            tags:
+                - { name: 'app.discord.listener' }

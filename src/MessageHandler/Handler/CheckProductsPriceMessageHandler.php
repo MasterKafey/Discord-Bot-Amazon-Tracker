@@ -60,6 +60,7 @@ class CheckProductsPriceMessageHandler
             $request->page = $page++;
             $request->domainId = $message->getAmazonDomain();
             $request->priceTypes = [CSVType::MARKET_NEW];
+            $request->excludeCategories = [301061];
             $request->dateRange = 0;
             $request->deltaPercentRange = [$this->configBusiness->get('lowest_percentage'), 100];
             $request->isLowest = true;

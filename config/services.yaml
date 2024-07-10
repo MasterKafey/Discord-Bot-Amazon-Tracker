@@ -17,6 +17,19 @@ services:
         arguments:
             $discordBotToken: '%env(DISCORD_BOT_TOKEN)%'
 
+    App\MessageHandler\Handler\CheckProductsPriceMessageHandler:
+        arguments:
+            $discordBotToken: '%env(DISCORD_BOT_TOKEN)%'
+
+    App\Business\ConfigBusiness:
+        arguments:
+            $configFilePath: '%kernel.project_dir%/data/configuration.yaml'
+
+    Keepa\KeepaAPI:
+        factory: ['App\Factory\KeepaAPIFactory', 'getKeepaAPI']
+        arguments:
+            $keepaToken: '%env(KEEPA_TOKEN)%'
+
     _instanceof:
         App\Discord\Command\AbstractDiscordCommand:
             tags:

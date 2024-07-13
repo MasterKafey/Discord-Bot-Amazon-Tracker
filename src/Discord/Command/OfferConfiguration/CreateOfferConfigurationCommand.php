@@ -28,7 +28,7 @@ class CreateOfferConfigurationCommand extends AbstractDiscordCommand
 
     public function getDescription(): string
     {
-        return 'Create an offer configuration to receive amazon deals';
+        return "Créer une configuration d'offre pour le salon en cours";
     }
 
     public function getOptions(): array
@@ -45,13 +45,13 @@ class CreateOfferConfigurationCommand extends AbstractDiscordCommand
                 'name' => 'min-percentage',
                 'type' => Option::INTEGER,
                 'required' => true,
-                'description' => 'Minimum percentage',
+                'description' => 'Pourcentage minimum',
             ],
             [
                 'name' => 'max-percentage',
                 'type' => Option::INTEGER,
                 'required' => true,
-                'description' => 'Maximum percentage',
+                'description' => "Pourcentage maximum",
             ],
         ];
     }
@@ -68,11 +68,15 @@ class CreateOfferConfigurationCommand extends AbstractDiscordCommand
         $minPercentage = $interaction->data->options->get('name', 'min-percentage')->value;
 
         if ($minPercentage < 10 || $minPercentage > 100) {
-            return $interaction->respondWithMessage(MessageBuilder::new()->setContent("Min % must be defined between 10 and 100"));
+            return $interaction->respondWithMessage(MessageBuilder::new()->setContent("Min % doit être défini entre 10 et 100"));
         }
 
         if ($maxPercentage < 10 || $maxPercentage > 100) {
-            return $interaction->respondWithMessage(MessageBuilder::new()->setContent("Max % must be defined between 10 and 100"));
+            return $interaction->respondWithMessage(MessageBuilder::new()->setContent("Max % doit être défini entre 10 et 100"));
+        }
+
+        if ($maxPercentage < $minPercentage) {
+            return $interaction->respondWithMessage(MessageBuilder::new()->setContent("Min % doit être inférieur au Max %"));
         }
 
         $offerConfiguration = (new OfferConfiguration())
@@ -86,7 +90,7 @@ class CreateOfferConfigurationCommand extends AbstractDiscordCommand
         $this->entityManager->flush();
 
         return $interaction->respondWithMessage(MessageBuilder::new()->setContent(
-            'Offer configuration created for current channel'
+            "La configuration d'offre a été défini"
         ));
     }
 }

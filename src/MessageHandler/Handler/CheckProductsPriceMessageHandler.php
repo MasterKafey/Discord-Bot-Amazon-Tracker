@@ -15,7 +15,9 @@ use Keepa\API\DealRequest;
 use Keepa\API\Request;
 use Keepa\API\ResponseStatus;
 use Keepa\helper\CSVType;
+use Keepa\helper\CSVTypeWrapper;
 use Keepa\helper\KeepaTime;
+use Keepa\helper\ProductAnalyzer;
 use Keepa\KeepaAPI;
 use Keepa\objects\AmazonLocale;
 use Keepa\objects\Deal;
@@ -47,6 +49,8 @@ class CheckProductsPriceMessageHandler
 
     public function offerConfigurationCheck(OfferConfiguration $offerConfiguration): void
     {
+        $minRating = $this->configBusiness->get('rating_warning');
+        $minReview = $this->configBusiness->get('review_warning');
         $amazonDomain = $offerConfiguration->getDomain();
         $excludedDomains = $this->entityManager->getRepository(ExcludedCategory::class)->findAll();
         $currentTime = floor(time() / 60) * 60;
@@ -132,7 +136,7 @@ class CheckProductsPriceMessageHandler
             'intents' => Intents::getAllIntents(),
         ]);
 
-        $discord->on('ready', function (Discord $discord) use ($filteredDeals, $offerConfiguration, $domain, $flag, $amazonDomain) {
+        $discord->on('ready', function (Discord $discord) use ($filteredDeals, $offerConfiguration, $domain, $flag, $amazonDomain, $minRating, $minReview) {
             $channel = $discord->getChannel($offerConfiguration->getChannelId());
             $embeds = [];
             $this->logger->info("Output channel id : {$offerConfiguration->getChannelId()}");
@@ -143,19 +147,32 @@ class CheckProductsPriceMessageHandler
                 $this->logger->warning("Output channel permission denied");
             }
 
-//            $asins = array_map(function(Deal $deal) {
-//                return $deal->asin;
-//            }, $filteredDeals);
-//
-//            $asinsRequest = Request::getProductRequest($amazonDomain, 0, null, null, 0, false, $asins, ['rating' => 1]);
-//            $response = $this->keepaAPI->sendRequestWithRetry($asinsRequest);
-//            $ratings = [];
-//            if ($response->status === ResponseStatus::OK) {
-//                foreach ($response->products as $product) {
-//                    if ($product->hasReviews) {}
-//                }
-//            }
+            $asins = array_map(function(Deal $deal) {
+                return $deal->asin;
+            }, $filteredDeals);
 
+            $asinsRequest = Request::getProductRequest($amazonDomain, 0, null, null, 0, true, $asins, ['rating' => 1]);
+            $response = $this->keepaAPI->sendRequestWithRetry($asinsRequest);
+            $ratings = [];
+            if ($response->status === ResponseStatus::OK) {
+                foreach ($response->products as $product) {
+                    $rating = !isset($product->csv[CSVType::RATING]) ? -1 : ProductAnalyzer::getLast($product->csv[CSVType::RATING], CSVTypeWrapper::getCSVTypeFromIndex(CSVType::RATING));
+                    $reviews = !isset($product->csv[CSVType::COUNT_REVIEWS]) ? -1 : ProductAnalyzer::getLast($product->csv[CSVType::COUNT_REVIEWS], CSVTypeWrapper::getCSVTypeFromIndex(CSVType::COUNT_REVIEWS));
+
+                    if ($rating === null) {
+                        $rating = -1;
+                    }
+
+                    if ($reviews === null) {
+                        $reviews = -1;
+                    }
+
+                    $ratings[$product->asin] = [
+                        'rating' => $rating,
+                        'reviews' => $reviews,
+                    ];
+                }
+            }
 
             $offersRemoved = 0;
             /** @var Deal $filteredDeal */
@@ -169,17 +186,33 @@ class CheckProductsPriceMessageHandler
                     continue;
                 }
 
+                [
+                    'rating' => $currentRating,
+                    'reviews' => $currentReviews
+                ] = $ratings[$filteredDeal->asin];
                 $asin = $filteredDeal->asin;
-                $embeds[$asin] = (new Embed($discord))
+                $embed = (new Embed($discord))
                     ->setAuthor("Un nouveau produit en erreur de prix a été trouvé !")
                     ->setTitle($filteredDeal->title)
                     ->setURL("https://amazon.$domain/dp/$asin?tag=duckamz-21")
                     ->addFieldValues('Ancien prix', $previousPrice !== -2 ? number_format($previousPrice / 100, 2) . "€" : "-", true)
                     ->addFieldValues('Prix moyen de la semaine', $weekAverage !== -2 ? number_format($weekAverage / 100, 2) . "€" : "-", true)
                     ->addFieldValues('Prix actuel', number_format($currentPrice / 100, 2) . "€", true)
-                    ->setThumbnail('https://images-na.ssl-images-amazon.com/images/I/' . implode('', array_map('chr', $filteredDeal->image)))
+                    ->addFieldValues('Note', $currentRating === -1 ? 'Aucune' : $currentRating / 10, true)
+                    ->addFieldValues('Nb de commentaires', $currentReviews === -1 ? 0 : $currentReviews, true)
                     ->addFieldValues('Pays', $flag)
                     ->setImage("https://graph.keepa.com/pricehistory.png?" . http_build_query(['asin' => $asin, 'domain' => $domain]));
+
+                if ($filteredDeal->image !== null) {
+                    $embed->setThumbnail('https://images-na.ssl-images-amazon.com/images/I/' . implode('', array_map('chr', $filteredDeal->image)));
+                }
+
+                if ($currentRating < $minRating || $currentReviews < $minReview) {
+                    $embed
+                        ->setFooter("⚠️ Vigilance : ce produit peut ne pas être fiable (mauvaise notes, faibles commentaires ...) - vérifiez avant d'acheter");
+                }
+
+                $embeds[$asin] = $embed;
             }
 
             $offers = $this->configBusiness->get('offers');
@@ -200,7 +233,7 @@ class CheckProductsPriceMessageHandler
             $this->configBusiness->set('offers', $offers);
 
             if (empty($embedsToSend)) {
-                $this->logger->info("Not offer to send");
+                $this->logger->info("No offer to send");
                 $discord->close();
             } else {
                 $this->logger->info("Send " . count($embedsToSend) . " offers");

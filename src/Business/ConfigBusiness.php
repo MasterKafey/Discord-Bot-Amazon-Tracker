@@ -45,6 +45,8 @@ readonly class ConfigBusiness
     {
         return [
             'offers' => [],
+            'review_warning' => 50,
+            'rating_warning' => 30,
         ];
     }
 }

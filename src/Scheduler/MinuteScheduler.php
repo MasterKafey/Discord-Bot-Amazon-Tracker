@@ -15,9 +15,9 @@ class MinuteScheduler implements ScheduleProviderInterface
     public function getSchedule(): Schedule
     {
         return (new Schedule())->add(
-            RecurringMessage::every(new \DateInterval('PT6M'), new CheckProductsPriceMessage(AmazonLocale::FR)),
-            RecurringMessage::every(new \DateInterval('PT6M'), new CheckProductsPriceMessage(AmazonLocale::ES)),
-            RecurringMessage::every(new \DateInterval('PT6M'), new CheckProductsPriceMessage(AmazonLocale::DE)),
+            RecurringMessage::every(new \DateInterval('PT1M'), new CheckProductsPriceMessage(AmazonLocale::FR)),
+            //RecurringMessage::every(new \DateInterval('PT1M'), new CheckProductsPriceMessage(AmazonLocale::ES)),
+            //RecurringMessage::every(new \DateInterval('PT1M'), new CheckProductsPriceMessage(AmazonLocale::DE)),
         );
     }
 }

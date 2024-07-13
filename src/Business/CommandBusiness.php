@@ -64,7 +64,6 @@ class CommandBusiness
                 break;
             }
         }
-        dump($lines);
 
         return $interaction->respondWithMessage(MessageBuilder::new()->setContent(implode("\n", $lines)));
     }

@@ -28,7 +28,7 @@ class TestCommand extends Command
     {
         $this->logger->info('Starting app:test command');
         $handler = $this->handler;
-        $handler(new CheckProductsPriceMessage(AmazonLocale::FR));
+        $handler(new CheckProductsPriceMessage());
         $this->logger->info('Ending app:test command');
 
         return Command::SUCCESS;

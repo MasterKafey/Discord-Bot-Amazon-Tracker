@@ -44,8 +44,6 @@ readonly class ConfigBusiness
     public function getDefaults(): array
     {
         return [
-            'output_channel' => null,
-            'lowest_percentage' => 50,
             'offers' => [],
         ];
     }

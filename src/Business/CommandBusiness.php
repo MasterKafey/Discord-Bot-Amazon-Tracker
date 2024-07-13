@@ -7,6 +7,7 @@ use Discord\Builders\MessageBuilder;
 use Discord\Discord;
 use Discord\Parts\Interactions\Command\Command;
 use Discord\Parts\Interactions\Interaction;
+use Psr\Log\LoggerInterface;
 use React\Promise\PromiseInterface;
 
 class CommandBusiness
@@ -20,7 +21,8 @@ class CommandBusiness
     }
 
     public function __construct(
-        private readonly Discord $discord
+        private readonly Discord         $discord,
+        private readonly LoggerInterface $logger,
     )
     {
     }
@@ -33,7 +35,8 @@ class CommandBusiness
                 'discord' => new Command($this->discord, $command->getAttributes()),
                 'callback' => function (Interaction $interaction) use ($command) {
                     try {
-                        $promise = $command->execute($interaction, $this->discord);
+                        $this->logger->info($command->getName() . ' executed by ' . $interaction->user->username);
+                        $promise = $command->execute($interaction);
                         if ($promise !== null) {
                             $promise->then(onRejected: function (\Throwable $throwable) use ($interaction) {
                                 $this->error($throwable, $interaction);
@@ -43,7 +46,8 @@ class CommandBusiness
                         return $this->error($throwable, $interaction);
                     }
                     return $promise;
-                }
+                },
+                'command' => $command,
             ];
         }
         return $commands;
@@ -64,6 +68,8 @@ class CommandBusiness
                 break;
             }
         }
+
+        $this->logger->error(implode("\n", $lines));
 
         return $interaction->respondWithMessage(MessageBuilder::new()->setContent(implode("\n", $lines)));
     }

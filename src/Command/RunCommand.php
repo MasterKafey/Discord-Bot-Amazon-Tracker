@@ -5,6 +5,7 @@ namespace App\Command;
 use App\Business\ListenerBusiness;
 use Discord\Discord;
 use App\Business\CommandBusiness;
+use Discord\Parts\Interactions\Interaction;
 use Discord\WebSockets\Event;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
@@ -17,6 +18,14 @@ use function React\Promise\all;
 #[AsCommand(name: 'app:run', description: 'Start discord bot')]
 class RunCommand extends Command
 {
+    const COMMAND_TO_DELETE = [
+        'add-product',
+        'detail-product',
+        'excluded-category',
+        'list-products',
+        'set-percentage',
+        'set-output-channel'
+    ];
 
     public function __construct(
         private readonly CommandBusiness  $commandBusiness,
@@ -43,6 +52,17 @@ class RunCommand extends Command
                 }
             }
 
+            $promises[] = $this->discord->application->commands->freshen()->then(function ($commands) {
+                $promises = [];
+                foreach ($commands as $command) {
+                    if (in_array($command->name, self::COMMAND_TO_DELETE)) {
+                        $promises[] = $this->discord->application->commands->delete($command);
+                    }
+                }
+
+                return all($promises);
+            });
+
             all($promises)->then(function () {
                 $this->logger->info('Discord bot saving commands');
                 $commands = $this->commandBusiness->getCommands();
@@ -54,7 +74,9 @@ class RunCommand extends Command
                 $this->logger->info('Discord bot register listener');
                 $listeners = $this->listenerBusiness->getListeners();
                 foreach ($listeners as $listener) {
-                    $this->discord->on($listener->getDiscordEvent(), $listener);
+                    $this->discord->on($listener->getDiscordEvent(), function(...$args) use ($listener) {
+                        $listener(...$args);
+                    });
                 }
                 $this->logger->info('Discord setup finished');
             });

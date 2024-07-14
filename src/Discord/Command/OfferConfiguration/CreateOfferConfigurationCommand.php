@@ -58,9 +58,9 @@ class CreateOfferConfigurationCommand extends AbstractDiscordCommand
 
     public function execute(Interaction $interaction): ?PromiseInterface
     {
-        $domain = $interaction->data->options->get('name', 'domain')->value;
+        $domain = strtoupper($interaction->data->options->get('name', 'domain')->value);
 
-        if (!isset($domain)) {
+        if (!isset(OfferConfiguration::DOMAINS[$domain])) {
             return $interaction->respondWithMessage(MessageBuilder::new()->setContent("Domain '$domain' is not valid"));
         }
 

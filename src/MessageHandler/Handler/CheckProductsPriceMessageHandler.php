@@ -192,7 +192,7 @@ class CheckProductsPriceMessageHandler
                 ] = $ratings[$filteredDeal->asin];
                 $asin = $filteredDeal->asin;
                 $embed = (new Embed($discord))
-                    ->setAuthor("Un nouveau produit en erreur de prix a été trouvé !")
+                    ->setAuthor("Un nouveau produit en erreur de prix a été trouvé")
                     ->setTitle($filteredDeal->title)
                     ->setURL("https://amazon.$domain/dp/$asin?tag=duckamz-21")
                     ->addFieldValues('Ancien prix', $previousPrice !== -2 ? number_format($previousPrice / 100, 2) . "€" : "-", true)

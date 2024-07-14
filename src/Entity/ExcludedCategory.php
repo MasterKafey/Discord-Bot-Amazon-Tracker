@@ -14,7 +14,7 @@ class ExcludedCategory
     #[ORM\Column(type: Types::INTEGER)]
     private ?int $id = null;
 
-    #[ORM\Column(type: Types::INTEGER, unique: true)]
+    #[ORM\Column(type: Types::BIGINT, unique: true)]
     private ?int $node;
 
     public function getId(): ?int

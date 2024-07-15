@@ -5,6 +5,7 @@ namespace App\MessageHandler\Handler;
 use App\Business\ConfigBusiness;
 use App\Entity\ExcludedCategory;
 use App\Entity\OfferConfiguration;
+use App\Factory\DiscordFactory;
 use App\MessageHandler\Message\CheckProductsPriceMessage;
 use Discord\Builders\MessageBuilder;
 use Discord\Discord;
@@ -33,6 +34,7 @@ class CheckProductsPriceMessageHandler
         private readonly ConfigBusiness         $configBusiness,
         private readonly LoggerInterface        $logger,
         private readonly EntityManagerInterface $entityManager,
+        private readonly LoggerInterface        $discordLogger
     )
     {
 
@@ -131,10 +133,7 @@ class CheckProductsPriceMessageHandler
         }
 
 
-        $discord = new Discord([
-            'token' => $this->discordBotToken,
-            'intents' => Intents::getAllIntents(),
-        ]);
+        $discord = DiscordFactory::getDiscord($this->discordBotToken, $this->discordLogger);
 
         $discord->on('ready', function (Discord $discord) use ($filteredDeals, $offerConfiguration, $domain, $flag, $amazonDomain, $minRating, $minReview) {
             $channel = $discord->getChannel($offerConfiguration->getChannelId());
@@ -147,7 +146,7 @@ class CheckProductsPriceMessageHandler
                 $this->logger->warning("Output channel permission denied");
             }
 
-            $asins = array_map(function(Deal $deal) {
+            $asins = array_map(function (Deal $deal) {
                 return $deal->asin;
             }, $filteredDeals);
 
@@ -185,16 +184,23 @@ class CheckProductsPriceMessageHandler
                     $offersRemoved++;
                     continue;
                 }
-
                 [
                     'rating' => $currentRating,
                     'reviews' => $currentReviews
                 ] = $ratings[$filteredDeal->asin];
                 $asin = $filteredDeal->asin;
+
+                $url = "https://amazon.$domain/dp/$asin";
+                $partnerId = $this->configBusiness->get('partner_id');
+
+                if (null !== $partnerId) {
+                    $url .= "?tag=" . urlencode($partnerId);
+                }
+
                 $embed = (new Embed($discord))
                     ->setAuthor("Un nouveau produit en erreur de prix a été trouvé")
                     ->setTitle($filteredDeal->title)
-                    ->setURL("https://amazon.$domain/dp/$asin?tag=duckamz-21")
+                    ->setURL($url)
                     ->addFieldValues('Ancien prix', $previousPrice !== -2 ? number_format($previousPrice / 100, 2) . "€" : "-", true)
                     ->addFieldValues('Prix moyen de la semaine', $weekAverage !== -2 ? number_format($weekAverage / 100, 2) . "€" : "-", true)
                     ->addFieldValues('Prix actuel', number_format($currentPrice / 100, 2) . "€", true)

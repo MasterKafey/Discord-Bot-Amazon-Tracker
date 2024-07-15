@@ -1,7 +1,12 @@
 monolog:
     channels:
-        - deprecation # Deprecations are logged in the dedicated "deprecation" channel when it exists
-
+        - discord
+    handlers:
+        discord:
+            type: stream
+            path: '%kernel.logs_dir%/discord.log'
+            level: debug
+            channels: ['discord']
 when@dev:
     monolog:
         handlers:

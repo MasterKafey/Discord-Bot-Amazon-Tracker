@@ -23,6 +23,7 @@ use Keepa\KeepaAPI;
 use Keepa\objects\AmazonLocale;
 use Keepa\objects\Deal;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
 #[AsMessageHandler]
@@ -34,7 +35,9 @@ class CheckProductsPriceMessageHandler
         private readonly ConfigBusiness         $configBusiness,
         private readonly LoggerInterface        $logger,
         private readonly EntityManagerInterface $entityManager,
-        private readonly LoggerInterface        $discordLogger
+        private readonly LoggerInterface        $discordLogger,
+        #[Autowire(env: 'GOOGLE_EMOJI_ID')]
+        private readonly string                 $googleEmojiId
     )
     {
 
@@ -99,6 +102,9 @@ class CheckProductsPriceMessageHandler
             $request->excludeCategories = array_map(function (ExcludedCategory $category) {
                 return $category->getNode();
             }, $excludedDomains);
+            if (!empty($offerConfiguration->getCategories())) {
+                $request->includeCategories = array_map('intval', $offerConfiguration->getCategories());
+            }
             $request->dateRange = 0;
             $request->deltaPercentRange = [$offerConfiguration->getMinPercentage(), $offerConfiguration->getMaxPercentage()];
             $request->isLowest = true;
@@ -118,7 +124,7 @@ class CheckProductsPriceMessageHandler
 
             $this->logger->info("Current request deals number : " . count($response->deals->dr));
             foreach ($response->deals->dr as $deal) {
-                if ($currentTime - (KeepaTime::keepaMinuteToUnixInMillis($deal->lastUpdate) / 1000) <= 360) {
+                if ($currentTime - (KeepaTime::keepaMinuteToUnixInMillis($deal->lastUpdate) / 1000) <= 3600) {
                     $filteredDeals[] = $deal;
                 } else {
                     break 2;
@@ -150,26 +156,28 @@ class CheckProductsPriceMessageHandler
                 return $deal->asin;
             }, $filteredDeals);
 
-            $asinsRequest = Request::getProductRequest($amazonDomain, 0, null, null, 0, true, $asins, ['rating' => 1]);
-            $response = $this->keepaAPI->sendRequestWithRetry($asinsRequest);
             $ratings = [];
-            if ($response->status === ResponseStatus::OK) {
-                foreach ($response->products as $product) {
-                    $rating = !isset($product->csv[CSVType::RATING]) ? -1 : ProductAnalyzer::getLast($product->csv[CSVType::RATING], CSVTypeWrapper::getCSVTypeFromIndex(CSVType::RATING));
-                    $reviews = !isset($product->csv[CSVType::COUNT_REVIEWS]) ? -1 : ProductAnalyzer::getLast($product->csv[CSVType::COUNT_REVIEWS], CSVTypeWrapper::getCSVTypeFromIndex(CSVType::COUNT_REVIEWS));
+            foreach (array_chunk($asins, 100) as $chunked_asins) {
+                $asinsRequest = Request::getProductRequest($amazonDomain, 0, null, null, 0, true, $chunked_asins, ['rating' => 1]);
+                $response = $this->keepaAPI->sendRequestWithRetry($asinsRequest);
+                if ($response->status === ResponseStatus::OK) {
+                    foreach ($response->products as $product) {
+                        $rating = !isset($product->csv[CSVType::RATING]) ? -1 : ProductAnalyzer::getLast($product->csv[CSVType::RATING], CSVTypeWrapper::getCSVTypeFromIndex(CSVType::RATING));
+                        $reviews = !isset($product->csv[CSVType::COUNT_REVIEWS]) ? -1 : ProductAnalyzer::getLast($product->csv[CSVType::COUNT_REVIEWS], CSVTypeWrapper::getCSVTypeFromIndex(CSVType::COUNT_REVIEWS));
 
-                    if ($rating === null) {
-                        $rating = -1;
+                        if ($rating === null) {
+                            $rating = -1;
+                        }
+
+                        if ($reviews === null) {
+                            $reviews = -1;
+                        }
+
+                        $ratings[$product->asin] = [
+                            'rating' => $rating,
+                            'reviews' => $reviews,
+                        ];
                     }
-
-                    if ($reviews === null) {
-                        $reviews = -1;
-                    }
-
-                    $ratings[$product->asin] = [
-                        'rating' => $rating,
-                        'reviews' => $reviews,
-                    ];
                 }
             }
 
@@ -184,6 +192,16 @@ class CheckProductsPriceMessageHandler
                     $offersRemoved++;
                     continue;
                 }
+
+                if ($offerConfiguration->isWeekAverage() && $previousPrice > 0 && $currentPrice > 0) {
+                    $weekPercentage = ($currentPrice - $weekAverage) / $weekAverage * -100;
+
+                    if ($weekPercentage < $offerConfiguration->getMinPercentage() || $weekPercentage > $offerConfiguration->getMaxPercentage()) {
+                        $offersRemoved++;
+                        continue;
+                    }
+                }
+
                 [
                     'rating' => $currentRating,
                     'reviews' => $currentReviews
@@ -197,6 +215,17 @@ class CheckProductsPriceMessageHandler
                     $url .= "?tag=" . urlencode($partnerId);
                 }
 
+                if ($previousPrice > 0 && $currentPrice > 0) {
+                    $percentage = round(($currentPrice - $previousPrice) / $previousPrice * -100);
+                } else {
+                    $percentage = '-';
+                }
+
+                $googleSearchQuery = http_build_query([
+                    'q' => $filteredDeal->title,
+                    'tbm' => 'shop'
+                ]);
+
                 $embed = (new Embed($discord))
                     ->setAuthor("Un nouveau produit en erreur de prix a été trouvé")
                     ->setTitle($filteredDeal->title)
@@ -205,8 +234,9 @@ class CheckProductsPriceMessageHandler
                     ->addFieldValues('Prix moyen de la semaine', $weekAverage !== -2 ? number_format($weekAverage / 100, 2) . "€" : "-", true)
                     ->addFieldValues('Prix actuel', number_format($currentPrice / 100, 2) . "€", true)
                     ->addFieldValues('Note', $currentRating === -1 ? 'Aucune' : $currentRating / 10, true)
-                    ->addFieldValues('Nb de commentaires', $currentReviews === -1 ? 0 : $currentReviews, true)
-                    ->addFieldValues('Pays', $flag)
+                    ->addFieldValues('Réduction', "$percentage%", true)
+                    ->addFieldValues('Pays', $flag, true)
+                    ->addFieldValues('Google', "[" . (empty($this->googleEmojiId) ? '' : "<:google:$this->googleEmojiId>") . " Lien](https://google.com/search?$googleSearchQuery)", true)
                     ->setImage("https://graph.keepa.com/pricehistory.png?" . http_build_query(['asin' => $asin, 'domain' => $domain]));
 
                 if ($filteredDeal->image !== null) {

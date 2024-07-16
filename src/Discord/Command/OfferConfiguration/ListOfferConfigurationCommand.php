@@ -65,7 +65,8 @@ class ListOfferConfigurationCommand extends AbstractDiscordCommand
             ->addFieldValues('% Max', implode("\n", $maxPercentages), true);
 
         $embeds[] = (new Embed($this->discord))
-            ->setTitle('Liste des config')
+            ->setTitle('Liste des prix minimum')
+            ->addFieldValues('Id', implode("\n", $ids), true)
             ->addFieldValues('Prix min', implode("\n", $minPrices), true);
 
         return $interaction->respondWithMessage(MessageBuilder::new()->setEmbeds($embeds));

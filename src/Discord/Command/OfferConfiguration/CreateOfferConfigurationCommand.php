@@ -53,6 +53,12 @@ class CreateOfferConfigurationCommand extends AbstractDiscordCommand
                 'required' => true,
                 'description' => "Pourcentage maximum",
             ],
+            [
+                'name' => 'week-average',
+                'type' => Option::BOOLEAN,
+                'required' => true,
+                'description' => 'Filtrer les prix par moyen de la semaine'
+            ]
         ];
     }
 
@@ -84,6 +90,7 @@ class CreateOfferConfigurationCommand extends AbstractDiscordCommand
             ->setMaxPercentage($maxPercentage)
             ->setMinPercentage($minPercentage)
             ->setChannelId($interaction->channel_id)
+            ->setWeekAverage($interaction->data->options->get('name', 'week-average')->value)
         ;
 
         $this->entityManager->persist($offerConfiguration);

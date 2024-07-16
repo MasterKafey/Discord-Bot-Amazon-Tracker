@@ -44,6 +44,12 @@ class OfferConfiguration
     #[ORM\Column(type: Types::STRING)]
     private ?string $channelId = null;
 
+    #[ORM\Column(type: Types::SIMPLE_ARRAY, nullable: true)]
+    private array $categories = [];
+
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => 0])]
+    private bool $weekAverage = false;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -82,12 +88,12 @@ class OfferConfiguration
         return $this;
     }
 
-    public function getMinimumPrice(): ?int
+    public function getMinimumPrice(): ?float
     {
         return $this->minimumPrice;
     }
 
-    public function setMinimumPrice(?int $minimumPrice): self
+    public function setMinimumPrice(?float $minimumPrice): self
     {
         $this->minimumPrice = $minimumPrice;
         return $this;
@@ -101,6 +107,45 @@ class OfferConfiguration
     public function setChannelId(string $channelId): self
     {
         $this->channelId = $channelId;
+        return $this;
+    }
+
+    public function getCategories(): array
+    {
+        return $this->categories;
+    }
+
+    public function setCategories(array $categories): self
+    {
+        $this->categories = $categories;
+        return $this;
+    }
+
+    public function addCategory(string $category): self
+    {
+        $this->categories[] = $category;
+        return $this;
+    }
+
+    public function removeCategory(string $category): self
+    {
+        $key = array_search($category, $this->categories);
+
+        if (false !== $key) {
+            unset($this->categories[$key]);
+        }
+
+        return $this;
+    }
+
+    public function isWeekAverage(): bool
+    {
+        return $this->weekAverage;
+    }
+
+    public function setWeekAverage(bool $weekAverage): self
+    {
+        $this->weekAverage = $weekAverage;
         return $this;
     }
 }

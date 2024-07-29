@@ -7,6 +7,7 @@ use App\Entity\ExcludedCategory;
 use App\Entity\OfferConfiguration;
 use App\Factory\DiscordFactory;
 use App\MessageHandler\Message\CheckProductsPriceMessage;
+use App\MessageHandler\Message\SendChannelMessageMessage;
 use Discord\Builders\MessageBuilder;
 use Discord\Discord;
 use Discord\Parts\Embed\Embed;
@@ -23,21 +24,17 @@ use Keepa\KeepaAPI;
 use Keepa\objects\AmazonLocale;
 use Keepa\objects\Deal;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
+use Symfony\Component\Messenger\MessageBusInterface;
 
 #[AsMessageHandler]
 class CheckProductsPriceMessageHandler
 {
     public function __construct(
         private readonly KeepaAPI               $keepaAPI,
-        private readonly string                 $discordBotToken,
         private readonly ConfigBusiness         $configBusiness,
         private readonly LoggerInterface        $logger,
-        private readonly EntityManagerInterface $entityManager,
-        private readonly LoggerInterface        $discordLogger,
-        #[Autowire(env: 'GOOGLE_EMOJI_ID')]
-        private readonly string                 $googleEmojiId
+        private readonly EntityManagerInterface $entityManager, private readonly MessageBusInterface $messageBus,
     )
     {
 
@@ -138,153 +135,125 @@ class CheckProductsPriceMessageHandler
             return;
         }
 
+        $embeds = [];
+        $this->logger->info("Output channel id : {$offerConfiguration->getChannelId()}");
 
-        $discord = DiscordFactory::getDiscord($this->discordBotToken, $this->discordLogger);
+        $asins = array_map(function (Deal $deal) {
+            return $deal->asin;
+        }, $filteredDeals);
 
-        $discord->on('ready', function (Discord $discord) use ($filteredDeals, $offerConfiguration, $domain, $flag, $amazonDomain, $minRating, $minReview) {
-            $channel = $discord->getChannel($offerConfiguration->getChannelId());
-            $embeds = [];
-            $this->logger->info("Output channel id : {$offerConfiguration->getChannelId()}");
+        $ratings = [];
+        foreach (array_chunk($asins, 100) as $chunked_asins) {
+            $asinsRequest = Request::getProductRequest($amazonDomain, 0, null, null, 0, true, $chunked_asins, ['rating' => 1]);
+            $response = $this->keepaAPI->sendRequestWithRetry($asinsRequest);
+            if ($response->status === ResponseStatus::OK) {
+                foreach ($response->products as $product) {
+                    $rating = !isset($product->csv[CSVType::RATING]) ? -1 : ProductAnalyzer::getLast($product->csv[CSVType::RATING], CSVTypeWrapper::getCSVTypeFromIndex(CSVType::RATING));
+                    $reviews = !isset($product->csv[CSVType::COUNT_REVIEWS]) ? -1 : ProductAnalyzer::getLast($product->csv[CSVType::COUNT_REVIEWS], CSVTypeWrapper::getCSVTypeFromIndex(CSVType::COUNT_REVIEWS));
 
-            if (null === $channel) {
-                $this->logger->warning("Output channel not found");
-            } else if (!$channel->getBotPermissions()->send_messages) {
-                $this->logger->warning("Output channel permission denied");
-            }
-
-            $asins = array_map(function (Deal $deal) {
-                return $deal->asin;
-            }, $filteredDeals);
-
-            $ratings = [];
-            foreach (array_chunk($asins, 100) as $chunked_asins) {
-                $asinsRequest = Request::getProductRequest($amazonDomain, 0, null, null, 0, true, $chunked_asins, ['rating' => 1]);
-                $response = $this->keepaAPI->sendRequestWithRetry($asinsRequest);
-                if ($response->status === ResponseStatus::OK) {
-                    foreach ($response->products as $product) {
-                        $rating = !isset($product->csv[CSVType::RATING]) ? -1 : ProductAnalyzer::getLast($product->csv[CSVType::RATING], CSVTypeWrapper::getCSVTypeFromIndex(CSVType::RATING));
-                        $reviews = !isset($product->csv[CSVType::COUNT_REVIEWS]) ? -1 : ProductAnalyzer::getLast($product->csv[CSVType::COUNT_REVIEWS], CSVTypeWrapper::getCSVTypeFromIndex(CSVType::COUNT_REVIEWS));
-
-                        if ($rating === null) {
-                            $rating = -1;
-                        }
-
-                        if ($reviews === null) {
-                            $reviews = -1;
-                        }
-
-                        $ratings[$product->asin] = [
-                            'rating' => $rating,
-                            'reviews' => $reviews,
-                        ];
+                    if ($rating === null) {
+                        $rating = -1;
                     }
+
+                    if ($reviews === null) {
+                        $reviews = -1;
+                    }
+
+                    $ratings[$product->asin] = [
+                        'rating' => $rating,
+                        'reviews' => $reviews,
+                    ];
                 }
             }
+        }
 
-            $offersRemoved = 0;
-            /** @var Deal $filteredDeal */
-            foreach ($filteredDeals as $filteredDeal) {
-                $currentPrice = $filteredDeal->current[CSVType::MARKET_NEW];
-                $previousPrice = $currentPrice + (-1 * $filteredDeal->deltaLast[CSVType::MARKET_NEW]);
-                $weekAverage = $filteredDeal->avg[2][CSVType::MARKET_NEW];
+        $offersRemoved = 0;
+        /** @var Deal $filteredDeal */
+        $payloads = [];
+        foreach ($filteredDeals as $filteredDeal) {
+            $currentPrice = $filteredDeal->current[CSVType::MARKET_NEW];
+            $previousPrice = $currentPrice + (-1 * $filteredDeal->deltaLast[CSVType::MARKET_NEW]);
+            $weekAverage = $filteredDeal->avg[2][CSVType::MARKET_NEW];
 
-                if ($currentPrice === $previousPrice) {
+            if ($currentPrice === $previousPrice) {
+                $offersRemoved++;
+                continue;
+            }
+
+            if ($offerConfiguration->isWeekAverage() && $previousPrice > 0 && $currentPrice > 0) {
+                $weekPercentage = ($currentPrice - $weekAverage) / $weekAverage * -100;
+
+                if ($weekPercentage < $offerConfiguration->getMinPercentage() || $weekPercentage > $offerConfiguration->getMaxPercentage()) {
                     $offersRemoved++;
                     continue;
                 }
-
-                if ($offerConfiguration->isWeekAverage() && $previousPrice > 0 && $currentPrice > 0) {
-                    $weekPercentage = ($currentPrice - $weekAverage) / $weekAverage * -100;
-
-                    if ($weekPercentage < $offerConfiguration->getMinPercentage() || $weekPercentage > $offerConfiguration->getMaxPercentage()) {
-                        $offersRemoved++;
-                        continue;
-                    }
-                }
-
-                [
-                    'rating' => $currentRating,
-                    'reviews' => $currentReviews
-                ] = $ratings[$filteredDeal->asin];
-                $asin = $filteredDeal->asin;
-
-                $url = "https://amazon.$domain/dp/$asin";
-                $partnerId = $this->configBusiness->get('partner_id');
-
-                if (null !== $partnerId) {
-                    $url .= "?tag=" . urlencode($partnerId);
-                }
-
-                if ($previousPrice > 0 && $currentPrice > 0) {
-                    $percentage = round(($currentPrice - $previousPrice) / $previousPrice * -100);
-                } else {
-                    $percentage = '-';
-                }
-
-                $googleSearchQuery = http_build_query([
-                    'q' => $filteredDeal->title,
-                    'tbm' => 'shop'
-                ]);
-
-                $embed = (new Embed($discord))
-                    ->setAuthor("Un nouveau produit en erreur de prix a été trouvé")
-                    ->setTitle($filteredDeal->title)
-                    ->setURL($url)
-                    ->addFieldValues('Ancien prix', $previousPrice !== -2 ? number_format($previousPrice / 100, 2) . "€" : "-", true)
-                    ->addFieldValues('Prix moyen de la semaine', $weekAverage !== -2 ? number_format($weekAverage / 100, 2) . "€" : "-", true)
-                    ->addFieldValues('Prix actuel', number_format($currentPrice / 100, 2) . "€", true)
-                    ->addFieldValues('Note', $currentRating === -1 ? 'Aucune' : $currentRating / 10, true)
-                    ->addFieldValues('Réduction', "$percentage%", true)
-                    ->addFieldValues('Pays', $flag, true)
-                    ->addFieldValues('Google', "[" . (empty($this->googleEmojiId) ? '' : "<:google:$this->googleEmojiId>") . " Lien](https://google.com/search?$googleSearchQuery)", true)
-                    ->setImage("https://graph.keepa.com/pricehistory.png?" . http_build_query(['asin' => $asin, 'domain' => $domain]));
-
-                if ($filteredDeal->image !== null) {
-                    $embed->setThumbnail('https://images-na.ssl-images-amazon.com/images/I/' . implode('', array_map('chr', $filteredDeal->image)));
-                }
-
-                if ($currentRating < $minRating || $currentReviews < $minReview) {
-                    $embed
-                        ->setFooter("⚠️ Vigilance : ce produit peut ne pas être fiable (mauvaise notes, faibles commentaires ...) - vérifiez avant d'acheter");
-                }
-
-                $embeds[$asin] = $embed;
             }
 
-            $offers = $this->configBusiness->get('offers');
-            $this->logger->info("Offer filtered because same price : $offersRemoved");
-            if (!isset($offers[$amazonDomain])) {
-                $offers[$amazonDomain] = [];
+            [
+                'rating' => $currentRating,
+                'reviews' => $currentReviews
+            ] = $ratings[$filteredDeal->asin];
+            $asin = $filteredDeal->asin;
+
+            $url = "https://amazon.$domain/dp/$asin";
+            $partnerId = $this->configBusiness->get('partner_id');
+
+            if (null !== $partnerId) {
+                $url .= "?tag=" . urlencode($partnerId);
             }
-            $embedsToSend = [];
 
-            foreach ($embeds as $asin => $embed) {
-                if (!in_array($asin, $offers[$amazonDomain])) {
-                    $embedsToSend[] = $embed;
-                }
-            }
-            $this->logger->info(count($embeds) - count($embedsToSend) . " offer already send");
-            $offers[$amazonDomain] = array_keys($embeds);
-
-            $this->configBusiness->set('offers', $offers);
-
-            if (empty($embedsToSend)) {
-                $this->logger->info("No offer to send");
-                $discord->close();
+            if ($previousPrice > 0 && $currentPrice > 0) {
+                $percentage = round(($currentPrice - $previousPrice) / $previousPrice * -100);
             } else {
-                $this->logger->info("Send " . count($embedsToSend) . " offers");
-                foreach (array_chunk($embedsToSend, 10) as $embeds) {
-                    $channel->sendMessage(MessageBuilder::new()->setEmbeds($embeds))->always(function () use ($discord) {
-                        $this->logger->info("Closing discord bot");
-                        $discord->close();
-                    });
-                }
+                $percentage = '-';
             }
-        });
 
-        $this->logger->info('Discord bot to send offer starting');
-        $discord->run();
+            $googleSearchQuery = http_build_query([
+                'q' => $filteredDeal->title,
+                'tbm' => 'shop'
+            ]);
+            $payloads[$asin] = [
+                'title' => $filteredDeal->title,
+                'url' => $url,
+                'previousPrice' => $previousPrice,
+                'weekAverage' => $weekAverage,
+                'currentPrice' => $currentPrice,
+                'currentRating' => $currentRating,
+                'percentage' => $percentage,
+                'flag' => $flag,
+                'googleSearchQuery' => $googleSearchQuery,
+                'asin' => $asin,
+                'domain' => $domain,
+            ];
 
-        $this->logger->info('Discord bot to send offer ending');
+            if ($filteredDeal->image !== null) {
+                $payloads[$asin]['thumbnail'] = 'https://images-na.ssl-images-amazon.com/images/I/' . implode('', array_map('chr', $filteredDeal->image));
+            }
+
+            if ($currentRating < $minRating || $currentReviews < $minReview) {
+                $payloads[$asin]['footer'] = "⚠️ Vigilance : ce produit peut ne pas être fiable (mauvaise notes, faibles commentaires ...) - vérifiez avant d'acheter";
+            }
+        }
+
+        $offers = $this->configBusiness->get('offers');
+        $this->logger->info("Offer filtered because same price : $offersRemoved");
+        if (!isset($offers[$amazonDomain])) {
+            $offers[$amazonDomain] = [];
+        }
+        $embedsToSend = [];
+
+        foreach ($payloads as $asin => $embed) {
+            if (!in_array($asin, $offers[$amazonDomain])) {
+                $embedsToSend[] = $embed;
+            }
+        }
+        $this->logger->info(count($payloads) - count($embedsToSend) . " offer already send");
+        $offers[$amazonDomain] = array_keys($embeds);
+
+        $this->configBusiness->set('offers', $offers);
+
+        if (!empty($embedsToSend)) {
+            $this->messageBus->dispatch((new SendChannelMessageMessage())->setChannelId($offerConfiguration->getChannelId())->setPayload($embedsToSend));
+        }
     }
 }

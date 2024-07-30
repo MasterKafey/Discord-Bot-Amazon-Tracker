@@ -226,7 +226,15 @@ class CheckProductsPriceMessageHandler
                 'q' => $filteredDeal->title,
                 'tbm' => 'shop'
             ]);
+
+            if ($offerConfiguration->isPremium()) {
+                $author = "Un nouveau produit en erreur de prix a été trouvé";
+            } else {
+                $author = "Vous utilisez la version gratuite, devenez premium pour débloquer les fonctionnalités plus puissantes";
+            }
+
             $payloads[$asin] = [
+                'author' => $author,
                 'title' => $filteredDeal->title,
                 'url' => $url,
                 'previousPrice' => $previousPrice,
@@ -235,7 +243,8 @@ class CheckProductsPriceMessageHandler
                 'currentRating' => $currentRating,
                 'percentage' => $percentage,
                 'flag' => $flag,
-                'googleSearchQuery' => $googleSearchQuery,
+                'googleUrl' => "https://google.com/search?$googleSearchQuery",
+                'aliexpressUrl' => "https://fr.aliexpress.com/w/wholesale-" . urlencode(str_replace(' ', '-', trim($filteredDeal->title))) . '.html',
                 'asin' => $asin,
                 'domain' => $domain,
                 'reviews' => $currentReviews,

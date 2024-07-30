@@ -58,6 +58,12 @@ class CreateOfferConfigurationCommand extends AbstractDiscordCommand
                 'type' => Option::BOOLEAN,
                 'required' => true,
                 'description' => 'Filtrer les prix par moyen de la semaine'
+            ],
+            [
+                'name' => 'premium',
+                'type' => Option::BOOLEAN,
+                'required' => true,
+                'description' => 'Afficher le texte premium (True) ou freemium (False)'
             ]
         ];
     }
@@ -91,6 +97,7 @@ class CreateOfferConfigurationCommand extends AbstractDiscordCommand
             ->setMinPercentage($minPercentage)
             ->setChannelId($interaction->channel_id)
             ->setWeekAverage($interaction->data->options->get('name', 'week-average')->value)
+            ->setIsPremium($interaction->data->options->get('name', 'premium')->value)
         ;
 
         $this->entityManager->persist($offerConfiguration);

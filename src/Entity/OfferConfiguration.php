@@ -53,6 +53,9 @@ class OfferConfiguration
     #[ORM\Column(type: Types::SIMPLE_ARRAY, nullable: true)]
     private array $lastOffersSent = [];
 
+    #[ORM\Column(type: Types::BOOLEAN)]
+    private bool $isPremium = false;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -160,6 +163,17 @@ class OfferConfiguration
     public function setLastOffersSent(array $lastOffersSent): self
     {
         $this->lastOffersSent = $lastOffersSent;
+        return $this;
+    }
+
+    public function isPremium(): bool
+    {
+        return $this->isPremium;
+    }
+
+    public function setIsPremium(bool $isPremium): self
+    {
+        $this->isPremium = $isPremium;
         return $this;
     }
 }

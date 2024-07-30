@@ -41,6 +41,8 @@ class RunCommand extends Command
         private readonly ReceiverInterface $receiver,
         #[Autowire(env: 'GOOGLE_EMOJI_ID')]
         private readonly string            $googleEmojiId,
+        #[Autowire(env: 'ALIEXPRESS_EMOJI_ID')]
+        private readonly string            $aliexpressEmojiId,
     )
     {
         parent::__construct();
@@ -130,6 +132,7 @@ class RunCommand extends Command
         $payloads = $message->getPayload();
         $embeds = [];
         foreach ($payloads as $payload) {
+            $author = $payload['author'];
             $weekAverage = $payload['weekAverage'];
             $currentPrice = $payload['currentPrice'];
             $currentRating = $payload['currentRating'];
@@ -137,13 +140,14 @@ class RunCommand extends Command
             $flag = $payload['flag'];
             $thumbnail = $payload['thumbnail'] ?? null;
             $footer = $payload['footer'] ?? null;
-            $googleSearchQuery = $payload['googleSearchQuery'];
+            $googleUrl = $payload['googleUrl'];
+            $aliexpressURL = $payload['aliexpressUrl'];
             $asin = $payload['asin'];
             $domain = $payload['domain'];
             $reviews = $payload['reviews'];
 
             $embed = (new Embed($this->discord))
-                ->setAuthor("Un nouveau produit en erreur de prix a été trouvé")
+                ->setAuthor($author)
                 ->setTitle($flag . ' ' . $payload['title'])
                 ->setURL($payload['url'])
                 ->addFieldValues('Prix moyen', $weekAverage !== -2 ? number_format($weekAverage / 100, 2) . "€" : "-", true)
@@ -151,7 +155,7 @@ class RunCommand extends Command
                 ->addFieldValues('Réduction', "$percentage%", true)
                 ->addFieldValues('Note', $currentRating === 0 ? 'Aucune' : $currentRating / 10, true)
                 ->addFieldValues('Avis', $reviews === 0 ? 'Aucun' : $reviews, true)
-                ->addFieldValues('Google', "[" . (empty($this->googleEmojiId) ? '' : "<:google:$this->googleEmojiId>") . " Lien](https://google.com/search?$googleSearchQuery)", true)
+                ->addFieldValues('', "Comparer sur [" . (empty($this->googleEmojiId) ? '' : "<:google:$this->googleEmojiId>") . " Google]($googleUrl) [" . (empty($this->aliexpressEmojiId) ? '' : "<:aliexpress:$this->aliexpressEmojiId>") . " Aliexpress]($aliexpressURL)")
                 ->setImage("https://graph.keepa.com/pricehistory.png?" . http_build_query(['asin' => $asin, 'domain' => $domain]));
 
             if ($thumbnail !== null) {

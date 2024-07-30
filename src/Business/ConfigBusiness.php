@@ -44,10 +44,11 @@ readonly class ConfigBusiness
     public function getDefaults(): array
     {
         return [
-            'offers' => [],
             'review_warning' => 50,
             'rating_warning' => 30,
             'partner_id' => null,
+            'min_reviews' => 0,
+            'min_rating' => 0,
         ];
     }
 }

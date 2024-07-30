@@ -149,8 +149,8 @@ class RunCommand extends Command
                 ->addFieldValues('Prix moyen', $weekAverage !== -2 ? number_format($weekAverage / 100, 2) . "€" : "-", true)
                 ->addFieldValues('Nouveau prix', number_format($currentPrice / 100, 2) . "€", true)
                 ->addFieldValues('Réduction', "$percentage%", true)
-                ->addFieldValues('Note', $currentRating === -1 ? 'Aucune' : $currentRating / 10, true)
-                ->addFieldValues('Avis', $reviews === -1 ? 'Aucun' : $reviews, true)
+                ->addFieldValues('Note', $currentRating === 0 ? 'Aucune' : $currentRating / 10, true)
+                ->addFieldValues('Avis', $reviews === 0 ? 'Aucun' : $reviews, true)
                 ->addFieldValues('Google', "[" . (empty($this->googleEmojiId) ? '' : "<:google:$this->googleEmojiId>") . " Lien](https://google.com/search?$googleSearchQuery)", true)
                 ->setImage("https://graph.keepa.com/pricehistory.png?" . http_build_query(['asin' => $asin, 'domain' => $domain]));
 

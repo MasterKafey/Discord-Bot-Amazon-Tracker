@@ -35,7 +35,7 @@ class CheckProductsPriceMessageHandler
         private readonly ConfigBusiness         $configBusiness,
         private readonly LoggerInterface        $logger,
         private readonly EntityManagerInterface $entityManager,
-        private readonly MessageBusInterface $messageBus
+        private readonly MessageBusInterface    $messageBus,
     )
     {
 
@@ -152,11 +152,11 @@ class CheckProductsPriceMessageHandler
                     $reviews = !isset($product->csv[CSVType::COUNT_REVIEWS]) ? -1 : ProductAnalyzer::getLast($product->csv[CSVType::COUNT_REVIEWS], CSVTypeWrapper::getCSVTypeFromIndex(CSVType::COUNT_REVIEWS));
 
                     if ($rating === null) {
-                        $rating = -1;
+                        $rating = 0;
                     }
 
                     if ($reviews === null) {
-                        $reviews = -1;
+                        $reviews = 0;
                     }
 
                     $ratings[$product->asin] = [
@@ -193,6 +193,16 @@ class CheckProductsPriceMessageHandler
                 'rating' => $currentRating,
                 'reviews' => $currentReviews
             ] = $ratings[$filteredDeal->asin];
+
+
+            if ($currentReviews < $this->configBusiness->get('min_reviews')) {
+                continue;
+            }
+
+            if ($currentRating < $this->configBusiness->get('min_rating')) {
+                continue;
+            }
+
             $asin = $filteredDeal->asin;
 
             $url = "https://amazon.$domain/dp/$asin";
@@ -209,7 +219,7 @@ class CheckProductsPriceMessageHandler
                     continue;
                 }
             } else {
-                $percentage = '-';
+                continue;
             }
 
             $googleSearchQuery = http_build_query([

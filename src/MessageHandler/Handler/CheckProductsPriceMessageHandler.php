@@ -34,7 +34,8 @@ class CheckProductsPriceMessageHandler
         private readonly KeepaAPI               $keepaAPI,
         private readonly ConfigBusiness         $configBusiness,
         private readonly LoggerInterface        $logger,
-        private readonly EntityManagerInterface $entityManager, private readonly MessageBusInterface $messageBus,
+        private readonly EntityManagerInterface $entityManager,
+        private readonly MessageBusInterface $messageBus
     )
     {
 
@@ -135,7 +136,6 @@ class CheckProductsPriceMessageHandler
             return;
         }
 
-        $embeds = [];
         $this->logger->info("Output channel id : {$offerConfiguration->getChannelId()}");
 
         $asins = array_map(function (Deal $deal) {
@@ -203,7 +203,11 @@ class CheckProductsPriceMessageHandler
             }
 
             if ($previousPrice > 0 && $currentPrice > 0) {
-                $percentage = round(($currentPrice - $previousPrice) / $previousPrice * -100);
+                $positivePercentage = round(($previousPrice - $currentPrice) / $previousPrice * 100);
+                $percentage = $positivePercentage * -1;
+                if ($positivePercentage < $offerConfiguration->getMinPercentage() || $positivePercentage > $offerConfiguration->getMaxPercentage()) {
+                    continue;
+                }
             } else {
                 $percentage = '-';
             }
@@ -224,6 +228,7 @@ class CheckProductsPriceMessageHandler
                 'googleSearchQuery' => $googleSearchQuery,
                 'asin' => $asin,
                 'domain' => $domain,
+                'reviews' => $currentReviews,
             ];
 
             if ($filteredDeal->image !== null) {
@@ -235,22 +240,21 @@ class CheckProductsPriceMessageHandler
             }
         }
 
-        $offers = $this->configBusiness->get('offers');
+        $offers = $offerConfiguration->getLastOffersSent();
         $this->logger->info("Offer filtered because same price : $offersRemoved");
-        if (!isset($offers[$amazonDomain])) {
-            $offers[$amazonDomain] = [];
-        }
         $embedsToSend = [];
 
         foreach ($payloads as $asin => $embed) {
-            if (!in_array($asin, $offers[$amazonDomain])) {
-                $embedsToSend[] = $embed;
+            if (!in_array($asin, $offers)) {
+                $embedsToSend[$asin] = $embed;
             }
         }
-        $this->logger->info(count($payloads) - count($embedsToSend) . " offer already send");
-        $offers[$amazonDomain] = array_keys($embeds);
 
-        $this->configBusiness->set('offers', $offers);
+        $this->logger->info(count($payloads) - count($embedsToSend) . " offer already send");
+
+        $offerConfiguration->setLastOffersSent(array_keys($payloads));
+        $this->entityManager->persist($offerConfiguration);
+        $this->entityManager->flush();
 
         if (!empty($embedsToSend)) {
             $this->messageBus->dispatch((new SendChannelMessageMessage())->setChannelId($offerConfiguration->getChannelId())->setPayload($embedsToSend));

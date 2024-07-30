@@ -130,7 +130,6 @@ class RunCommand extends Command
         $payloads = $message->getPayload();
         $embeds = [];
         foreach ($payloads as $payload) {
-            $previousPrice = $payload['previousPrice'];
             $weekAverage = $payload['weekAverage'];
             $currentPrice = $payload['currentPrice'];
             $currentRating = $payload['currentRating'];
@@ -141,17 +140,17 @@ class RunCommand extends Command
             $googleSearchQuery = $payload['googleSearchQuery'];
             $asin = $payload['asin'];
             $domain = $payload['domain'];
+            $reviews = $payload['reviews'];
 
             $embed = (new Embed($this->discord))
                 ->setAuthor("Un nouveau produit en erreur de prix a été trouvé")
-                ->setTitle($payload['title'])
+                ->setTitle($flag . ' ' . $payload['title'])
                 ->setURL($payload['url'])
-                ->addFieldValues('Ancien prix', $previousPrice !== -2 ? number_format($previousPrice / 100, 2) . "€" : "-", true)
-                ->addFieldValues('Prix moyen de la semaine', $weekAverage !== -2 ? number_format($weekAverage / 100, 2) . "€" : "-", true)
-                ->addFieldValues('Prix actuel', number_format($currentPrice / 100, 2) . "€", true)
-                ->addFieldValues('Note', $currentRating === -1 ? 'Aucune' : $currentRating / 10, true)
+                ->addFieldValues('Prix moyen', $weekAverage !== -2 ? number_format($weekAverage / 100, 2) . "€" : "-", true)
+                ->addFieldValues('Nouveau prix', number_format($currentPrice / 100, 2) . "€", true)
                 ->addFieldValues('Réduction', "$percentage%", true)
-                ->addFieldValues('Pays', $flag, true)
+                ->addFieldValues('Note', $currentRating === -1 ? 'Aucune' : $currentRating / 10, true)
+                ->addFieldValues('Avis', $reviews === -1 ? 'Aucun' : $reviews, true)
                 ->addFieldValues('Google', "[" . (empty($this->googleEmojiId) ? '' : "<:google:$this->googleEmojiId>") . " Lien](https://google.com/search?$googleSearchQuery)", true)
                 ->setImage("https://graph.keepa.com/pricehistory.png?" . http_build_query(['asin' => $asin, 'domain' => $domain]));
 

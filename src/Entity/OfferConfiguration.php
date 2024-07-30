@@ -50,6 +50,9 @@ class OfferConfiguration
     #[ORM\Column(type: Types::BOOLEAN, options: ['default' => 0])]
     private bool $weekAverage = false;
 
+    #[ORM\Column(type: Types::SIMPLE_ARRAY, nullable: true)]
+    private array $lastOffersSent = [];
+
     public function getId(): ?int
     {
         return $this->id;
@@ -146,6 +149,17 @@ class OfferConfiguration
     public function setWeekAverage(bool $weekAverage): self
     {
         $this->weekAverage = $weekAverage;
+        return $this;
+    }
+
+    public function getLastOffersSent(): array
+    {
+        return $this->lastOffersSent;
+    }
+
+    public function setLastOffersSent(array $lastOffersSent): self
+    {
+        $this->lastOffersSent = $lastOffersSent;
         return $this;
     }
 }

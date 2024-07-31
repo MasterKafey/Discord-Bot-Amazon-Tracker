@@ -227,7 +227,9 @@ class CheckProductsPriceMessageHandler
                 'tbm' => 'shop'
             ]);
 
-            if ($offerConfiguration->isPremium()) {
+            if ($currentRating <= 0 || $currentReviews <= 0) {
+                $author = "⚠️ Attention : Cet article n'a aucun avis, faites vos propres recherches avant d'acheter";
+            } else if ($offerConfiguration->isPremium()) {
                 $author = "Un nouveau produit en erreur de prix a été trouvé";
             } else {
                 $author = "Vous utilisez la version gratuite, devenez premium pour débloquer les fonctionnalités plus puissantes";
@@ -255,7 +257,7 @@ class CheckProductsPriceMessageHandler
             }
 
             if ($currentRating < $minRating || $currentReviews < $minReview) {
-                $payloads[$asin]['footer'] = "⚠️ Vigilance : ce produit peut ne pas être fiable (mauvaise notes, faibles commentaires ...) - vérifiez avant d'acheter";
+                $payloads[$asin]['footer'] = "📍 Vigilance : ce produit peut ne pas être fiable (mauvaise notes, faibles commentaires ...) - vérifiez avant d'acheter";
             }
         }
 

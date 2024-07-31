@@ -27,7 +27,8 @@ class RunCommand extends Command
         'excluded-category',
         'list-products',
         'set-percentage',
-        'set-output-channel'
+        'set-output-channel',
+        'set-interval'
     ];
 
     private array $processingQueue = [];
@@ -113,7 +114,10 @@ class RunCommand extends Command
                             return;
                         }
                         ++$i;
-                        try {$this->sendMessage($message);} catch (\Throwable) {}
+                        try {
+                            $this->sendMessage($message);
+                        } catch (\Throwable) {
+                        }
                         $this->receiver->ack($envelope);
                     }
                 });
@@ -155,7 +159,7 @@ class RunCommand extends Command
                 ->addFieldValues('Réduction', "$percentage%", true)
                 ->addFieldValues('Note', $currentRating === 0 ? 'Aucune' : $currentRating / 10, true)
                 ->addFieldValues('Avis', $reviews === 0 ? 'Aucun' : $reviews, true)
-                ->addFieldValues('', "Comparer sur [" . (empty($this->googleEmojiId) ? '' : "<:google:$this->googleEmojiId>") . " Google]($googleUrl) [" . (empty($this->aliexpressEmojiId) ? '' : "<:aliexpress:$this->aliexpressEmojiId>") . " Aliexpress]($aliexpressURL)")
+                ->addFieldValues('Comparer sur', "[" . (empty($this->googleEmojiId) ? '' : "<:google:$this->googleEmojiId>") . " Google]($googleUrl) [" . (empty($this->aliexpressEmojiId) ? '' : "<:aliexpress:$this->aliexpressEmojiId>") . " Aliexpress]($aliexpressURL)")
                 ->setImage("https://graph.keepa.com/pricehistory.png?" . http_build_query(['asin' => $asin, 'domain' => $domain]));
 
             if ($thumbnail !== null) {

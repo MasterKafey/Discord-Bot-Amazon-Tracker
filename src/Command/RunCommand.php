@@ -44,6 +44,8 @@ class RunCommand extends Command
         private readonly string            $googleEmojiId,
         #[Autowire(env: 'ALIEXPRESS_EMOJI_ID')]
         private readonly string            $aliexpressEmojiId,
+        #[Autowire(env: 'AMAZON_EMOJI_ID')]
+        private readonly string            $amazonEmojiId,
     )
     {
         parent::__construct();
@@ -152,7 +154,7 @@ class RunCommand extends Command
 
             $embed = (new Embed($this->discord))
                 ->setAuthor($author)
-                ->setTitle($flag . ' ' . $payload['title'])
+                ->setTitle((!empty($this->amazonEmojiId) ? "<:amazon:$this->amazonEmojiId> " : '') . $flag . ' ' . $payload['title'])
                 ->setURL($payload['url'])
                 ->addFieldValues('Prix moyen', $weekAverage !== -2 ? number_format($weekAverage / 100, 2) . "€" : "-", true)
                 ->addFieldValues('Nouveau prix', number_format($currentPrice / 100, 2) . "€", true)

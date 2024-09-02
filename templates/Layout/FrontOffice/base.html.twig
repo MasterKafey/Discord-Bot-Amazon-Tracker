@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="fr" class="h-full bg-gray-900">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Discord Bot Amazon Tracker{% endblock %}</title>
+    <link rel="icon" href="https://www.svgrepo.com/show/353655/discord-icon.svg">
+    {{ encore_entry_link_tags('app') }}
+    {% block stylesheets %}{% endblock %}
+    {{ encore_entry_script_tags('app') }}
+    {% block javascripts %}{% endblock javascripts %}
+</head>
+{% block body_html %}
+    <body class="h-full">
+    {% block body %}{% endblock body %}
+    </body>
+{% endblock body_html %}
+</html>

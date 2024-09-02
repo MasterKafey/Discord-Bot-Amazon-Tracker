@@ -1,0 +1,96 @@
+{% extends 'Layout/BackOffice/base.html.twig' %}
+
+{% block body %}
+    <div class="bg-gray-900">
+        <div class="mx-auto max-w-7xl">
+            <div class="bg-gray-900 py-10">
+                <div class="px-4 sm:px-6 lg:px-8">
+                    <div class="sm:flex sm:items-center">
+                        <div class="sm:flex-auto">
+                            <h1 class="text-base font-semibold leading-6 text-white">Configuration d'offres</h1>
+                        </div>
+                        <div class="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
+                            <a href="{{ path('app_offer_configuration_create') }}" type="button"
+                               class="block rounded-md bg-indigo-500 px-3 py-2 text-center text-sm font-semibold text-white hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500">Ajouter
+                                une configuration d'offres</a>
+                        </div>
+                    </div>
+                    <div class="mt-8 flow-root">
+                        <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                            <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+                                <table class="min-w-full divide-y divide-gray-700">
+                                    <thead>
+                                    <tr>
+                                        <th scope="col"
+                                            class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-white sm:pl-0">
+                                            Id
+                                        </th>
+                                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-white">
+                                            Domain
+                                        </th>
+                                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-white">
+                                            Id Salon Discord
+                                        </th>
+                                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-white">
+                                            % Min
+                                        </th>
+                                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-white">
+                                            % Max
+                                        </th>
+                                        <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-0">
+                                            <span class="sr-only">Edit</span>
+                                        </th>
+                                    </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-800">
+                                    {% for offer_configuration in offer_configurations %}
+                                        <tr>
+                                            <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-white sm:pl-0">
+                                                {{ offer_configuration.id }}
+                                            </td>
+                                            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-300">
+                                                {{ offer_configuration.domainLabel }}
+                                            </td>
+                                            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-300">
+                                                {{ offer_configuration.channelId }}
+                                            </td>
+                                            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-300">
+                                                {{ offer_configuration.minPercentage }}
+                                            </td>
+                                            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-300">
+                                                {{ offer_configuration.maxPercentage }}
+                                            </td>
+                                            <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
+                                                <span class="isolate inline-flex rounded-md">
+                                                    <a href="{{ path('app_offer_configuration_update', {'id': offer_configuration.id}) }}"
+                                                         class="relative inline-flex items-center rounded-l-md bg-orange-400 px-2 py-2 text-white ring-1 ring-inset ring-orange-500 hover:bg-orange-500 focus:z-10">
+                                                        <span class="sr-only">Modifier</span>
+                                                        <svg class="h-5 w-5" viewBox="0 -960 960 960" fill="currentColor"
+                                                             aria-hidden="true">
+                                                            <path xmlns="http://www.w3.org/2000/svg" d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"></path>
+                                                        </svg>
+                                                      </a>
+                                                      <a href="{{ path('app_offer_configuration_delete', {'id': offer_configuration.id}) }}"
+                                                         class="relative -ml-px inline-flex items-center rounded-r-md bg-red-600 px-2 py-2 text-white ring-1 ring-inset ring-red-500 hover:bg-red-700 focus:z-10">
+                                                        <span class="sr-only">Supprimer</span>
+                                                        <svg class="h-5 w-5" viewBox="0 -960 960 960"
+                                                             fill="currentColor"
+                                                             aria-hidden="true">
+                                                          <path xmlns="http://www.w3.org/2000/svg"
+                                                                d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"></path>
+                                                        </svg>
+                                                  </a>
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock body %}

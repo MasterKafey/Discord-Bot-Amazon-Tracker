@@ -4,51 +4,56 @@ namespace App\Business;
 
 use Symfony\Component\Yaml\Yaml;
 
-readonly class ConfigBusiness
+class ConfigBusiness
 {
-    public function __construct(
-        private string $configFilePath,
-    )
-    {
+    private static string $configFilePath = __DIR__ . '/../../data/configuration.yaml';
 
+    public static function get($key): mixed
+    {
+        return array_merge(self::getDefaults(), self::getFileContent())[$key] ?? null;
     }
 
-    public function get($key): mixed
+    public static function set(string $key, mixed $value): void
     {
-        return array_merge($this->getDefaults(), $this->getFileContent())[$key] ?? null;
-    }
-
-    public function set(string $key, mixed $value): void
-    {
-        if (!array_key_exists($key, $this->getDefaults())) {
+        if (!array_key_exists($key, self::getDefaults())) {
             throw new \Exception("Invalid configuration key '$key'");
         }
 
-        $this->setFileContent(array_merge($this->getFileContent(), [$key => $value]));
+        self::setFileContent(array_merge(self::getFileContent(), [$key => $value]));
     }
 
-    private function getFileContent(): array
+    private static function getFileContent(): array
     {
-        if (!file_exists($this->configFilePath)) {
-            $this->setFileContent([]);
+        if (!file_exists(self::$configFilePath)) {
+            if (!is_dir(dirname(self::$configFilePath))) {
+                mkdir(dirname(self::$configFilePath), 775, true);
+            }
+            self::setFileContent([]);
         }
 
-        return Yaml::parseFile($this->configFilePath);
+        return Yaml::parseFile(self::$configFilePath);
     }
 
-    private function setFileContent(array $data): void
+    private static function setFileContent(array $data): void
     {
-        file_put_contents($this->configFilePath, Yaml::dump($data));
+        file_put_contents(self::$configFilePath, Yaml::dump($data));
     }
 
-    public function getDefaults(): array
+    public static function getDefaults(): array
     {
         return [
             'review_warning' => 50,
             'rating_warning' => 30,
             'partner_id' => null,
+            'min_sales' => 0,
             'min_reviews' => 0,
             'min_rating' => 0,
+            'minute_interval' => 5,
+            'discord_token' => null,
+            'keepa_token' => null,
+            'google_emoji_id' => null,
+            'aliexpress_emoji_id' => null,
+            'amazon_emoji_id' => null,
         ];
     }
 }

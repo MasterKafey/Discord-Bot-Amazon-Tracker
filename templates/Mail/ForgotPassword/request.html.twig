@@ -1,0 +1,13 @@
+{% extends 'Layout/Mail/base.html.twig' %}
+
+{% block subject %}Mot de passe oublié{% endblock %}
+
+{%- block html -%}
+    <h1>{{ block('subject') }}</h1>
+    Vous pouvez définir un nouveau mot de passe <a href="{{ absolute_url(path('app_forgot_password_submit', {'value': token})) }}" target="_blank">ici</a>!
+{%- endblock html -%}
+
+{% block text %}
+    {{ block('subject') }}
+    Vous pouvez définir un nouveau mot de passe ici : {{ absolute_url(path('app_forgot_password_submit', {'value': token})) }}
+{% endblock text %}

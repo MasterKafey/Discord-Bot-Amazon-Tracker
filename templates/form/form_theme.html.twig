@@ -1,0 +1,13 @@
+{# templates/form/form_theme.html.twig #}
+{% block toggle_widget %}
+    <div class="toggle-container">
+        <button type="button"
+                class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent {{ data ? 'bg-indigo-600' : 'bg-gray-200' }} transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 toggle-button"
+                role="switch" aria-checked="{{ data ? 'true' : 'false' }}" data-toggle-id="{{ id }}">
+            <span class="sr-only">{{ label }}</span>
+            <span aria-hidden="true"
+                  class="pointer-events-none inline-block h-5 w-5 translate-x-{{ data ? '5' : '0' }} transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
+        </button>
+        <input type="checkbox" {{ block('widget_attributes') }} class="hidden" {% if data %}checked{% endif %}>
+    </div>
+{% endblock %}

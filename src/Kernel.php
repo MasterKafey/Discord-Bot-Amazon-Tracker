@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Business\ConfigBusiness;
 use App\DependencyInjection\CompilerPass\DiscordCommandCompilerPass;
 use App\DependencyInjection\CompilerPass\DiscordListenerCompilerPass;
 use Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;

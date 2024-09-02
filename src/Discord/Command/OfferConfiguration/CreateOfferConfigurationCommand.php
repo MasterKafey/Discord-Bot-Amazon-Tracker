@@ -63,7 +63,14 @@ class CreateOfferConfigurationCommand extends AbstractDiscordCommand
                 'name' => 'premium',
                 'type' => Option::BOOLEAN,
                 'required' => true,
-                'description' => 'Afficher le texte premium (True) ou freemium (False)'
+                'description' => 'Afficher le texte premium (True) ou freemium (False)',
+                'default' => false,
+            ],
+            [
+                'name' => 'view',
+                'type' => Option::STRING,
+                'required' => false,
+                'description' => "Définir l'affichage des offres (" . implode(', ', SetViewCommand::VIEWS) . ')',
             ]
         ];
     }
@@ -78,6 +85,7 @@ class CreateOfferConfigurationCommand extends AbstractDiscordCommand
 
         $maxPercentage = $interaction->data->options->get('name', 'max-percentage')->value;
         $minPercentage = $interaction->data->options->get('name', 'min-percentage')->value;
+        $view = $interaction->data->options->get('name', 'view')->value ?? OfferConfiguration::BUYER_VIEW;
 
         if ($minPercentage < 10 || $minPercentage > 100) {
             return $interaction->respondWithMessage(MessageBuilder::new()->setContent("Min % doit être défini entre 10 et 100"));
@@ -91,8 +99,13 @@ class CreateOfferConfigurationCommand extends AbstractDiscordCommand
             return $interaction->respondWithMessage(MessageBuilder::new()->setContent("Min % doit être inférieur au Max %"));
         }
 
+        if (!in_array(strtoupper($view), SetViewCommand::VIEWS, true)) {
+            return $interaction->respondWithMessage(MessageBuilder::new()->setContent("La vue $view n'existe pas, valeurs valide : " . implode(', ', SetViewCommand::VIEWS)));
+        }
+
         $offerConfiguration = (new OfferConfiguration())
             ->setDomain(OfferConfiguration::DOMAINS[$domain])
+            ->setView(strtoupper($view))
             ->setMaxPercentage($maxPercentage)
             ->setMinPercentage($minPercentage)
             ->setChannelId($interaction->channel_id)

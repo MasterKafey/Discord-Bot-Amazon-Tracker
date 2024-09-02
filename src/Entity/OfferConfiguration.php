@@ -24,6 +24,9 @@ class OfferConfiguration
         'US' => AmazonLocale::US,
     ];
 
+    const BUYER_VIEW = 'BUYER_VIEW';
+    const SELLER_VIEW = 'SELLER_VIEW';
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::INTEGER)]
@@ -50,11 +53,14 @@ class OfferConfiguration
     #[ORM\Column(type: Types::BOOLEAN, options: ['default' => 0])]
     private bool $weekAverage = false;
 
-    #[ORM\Column(type: Types::SIMPLE_ARRAY, nullable: true)]
+    #[ORM\Column(type: Types::JSON, nullable: true)]
     private array $lastOffersSent = [];
 
     #[ORM\Column(type: Types::BOOLEAN)]
     private bool $isPremium = false;
+
+    #[ORM\Column(type: Types::STRING, options: ['default' => self::BUYER_VIEW])]
+    private string $view = self::BUYER_VIEW;
 
     public function getId(): ?int
     {
@@ -64,6 +70,15 @@ class OfferConfiguration
     public function getDomain(): ?int
     {
         return $this->domain;
+    }
+
+    public function getDomainLabel(): ?string
+    {
+        if (null === $this->domain) {
+            return null;
+        }
+
+        return array_search($this->domain, self::DOMAINS);
     }
 
     public function setDomain(int $domain): self
@@ -174,6 +189,17 @@ class OfferConfiguration
     public function setIsPremium(bool $isPremium): self
     {
         $this->isPremium = $isPremium;
+        return $this;
+    }
+
+    public function getView(): string
+    {
+        return $this->view;
+    }
+
+    public function setView(string $view): self
+    {
+        $this->view = $view;
         return $this;
     }
 }

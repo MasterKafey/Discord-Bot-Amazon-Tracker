@@ -1,0 +1,24 @@
+{% extends 'Layout/BackOffice/base.html.twig' %}
+
+{% block body %}
+    <h1 class="sr-only">Suppression d'une offre de configuration</h1>
+    <div class="divide-y divide-white/5">
+    <div class="px-4 py-16 sm:px-6 lg:px-8">
+        {{ form_start(form) }}
+        <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
+            <div class="sm:col-span-3 flex">
+                {{ form_label(form.confirm, 'Etes vous sûr de vouloir supprimer cette configuration d\'offre ?', {'label_attr': {'class': 'text-sm font-medium leading-6 text-white pr-10'}}) }}
+                {{ form_widget(form.confirm) }}
+            </div>
+
+        </div>
+
+        <div class="mt-8 flex">
+            <button type="submit"
+                    class="rounded-md bg-indigo-500 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500">
+                Valider
+            </button>
+        </div>
+        {{ form_end(form) }}
+    </div>
+    </div>{% endblock body %}

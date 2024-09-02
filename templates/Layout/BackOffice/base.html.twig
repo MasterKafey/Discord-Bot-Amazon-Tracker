@@ -1,0 +1,59 @@
+{% extends 'Layout/FrontOffice/base.html.twig' %}
+
+{% set items = navbar_business.items %}
+
+{% block body_html %}
+    <body class="h-full">
+    <div>
+        {% include 'Widget/Navbar/sidebar.html.twig' with {items: items} %}
+
+        <div class="xl:pl-72">
+            <!-- Sticky search header -->
+            <div class="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-6 border-b border-white/5 bg-gray-900 px-4 shadow-sm sm:px-6 lg:px-8">
+                <button type="button" class="-m-2.5 p-2.5 text-white xl:hidden" id="burger-menu-button">
+                    <span class="sr-only">Open sidebar</span>
+                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10zm0 5.25a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75a.75.75 0 01-.75-.75z" clip-rule="evenodd"></path>
+                    </svg>
+                </button>
+            </div>
+            <main>
+                {% block body %}{% endblock body %}
+            </main>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const toggleButtons = document.querySelectorAll('.toggle-button');
+
+            toggleButtons.forEach(function (button) {
+                const checkboxId = button.getAttribute('data-toggle-id');
+                const checkbox = document.getElementById(checkboxId);
+
+                button.addEventListener('click', function () {
+                    const isChecked = checkbox.checked;
+
+                    console.log(isChecked);
+
+                    if (isChecked) {
+                        button.classList.remove('bg-indigo-600');
+                        button.classList.add('bg-gray-200');
+                        button.setAttribute('aria-checked', 'false');
+                        button.querySelector('span[aria-hidden="true"]').classList.remove('translate-x-5');
+                        button.querySelector('span[aria-hidden="true"]').classList.add('translate-x-0');
+                    } else {
+                        button.classList.remove('bg-gray-200');
+                        button.classList.add('bg-indigo-600');
+                        button.setAttribute('aria-checked', 'true');
+                        button.querySelector('span[aria-hidden="true"]').classList.remove('translate-x-0');
+                        button.querySelector('span[aria-hidden="true"]').classList.add('translate-x-5');
+                    }
+
+                    checkbox.checked = !isChecked;
+                });
+            });
+        });
+
+    </script>
+    </body>
+{% endblock body_html %}

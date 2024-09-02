@@ -15,18 +15,12 @@ services:
     Discord\Discord:
         factory: [ 'App\Factory\DiscordFactory', 'getDiscord' ]
         arguments:
-            $discordBotToken: '%env(DISCORD_BOT_TOKEN)%'
             $logger: '@monolog.logger.discord'
-
-    App\Business\ConfigBusiness:
-        arguments:
-            $configFilePath: '%kernel.project_dir%/data/configuration.yaml'
 
     Keepa\KeepaAPI:
         factory: [ 'App\Factory\KeepaAPIFactory', 'getKeepaAPI' ]
-        arguments:
-            $keepaToken: '%env(KEEPA_TOKEN)%'
-    App\Command\RunCommand:
+
+    App\Command\Discord\RunCommand:
         arguments:
             $receiver: '@messenger.transport.async'
 

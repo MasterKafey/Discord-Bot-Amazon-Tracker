@@ -35,7 +35,7 @@ class SetMinRatingCommand extends AbstractDiscordCommand
                 'name' => 'min-rating',
                 'type' => Option::NUMBER,
                 'required' => true,
-                'description' => "La note minimum",
+                'description' => "La note minimal",
             ],
         ];
     }
@@ -45,11 +45,11 @@ class SetMinRatingCommand extends AbstractDiscordCommand
         $minRating = $interaction->data->options->get('name', 'min-rating')->value;
 
         if ($minRating < 0 || $minRating > 5) {
-            return $interaction->respondWithMessage(MessageBuilder::new()->setContent("La note minimum doit être compris entre 0 et 5"));
+            return $interaction->respondWithMessage(MessageBuilder::new()->setContent("La note minimal doit être compris entre 0 et 5"));
         }
 
         $this->configBusiness->set('min_rating', round($minRating * 10));
 
-        return $interaction->respondWithMessage(MessageBuilder::new()->setContent("La note minimum a correctement été mis à jour"));
+        return $interaction->respondWithMessage(MessageBuilder::new()->setContent("La note minimal a correctement été mis à jour"));
     }
 }

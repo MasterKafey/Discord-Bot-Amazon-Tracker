@@ -1,0 +1,103 @@
+{% extends 'Layout/BackOffice/base.html.twig' %}
+
+{% set states = {
+    0: 'Arrêté',
+    10: 'Démarre',
+    20: 'En cours',
+    30: 'Erreur, tente de redémarrer',
+    40: "En cours d'arret",
+    100: 'Arrété',
+    200: 'Erreur fatal, le redémarrage ne fonctionne pas'
+} %}
+
+{% block body %}
+    <div class="bg-gray-900">
+        <div class="mx-auto max-w-7xl">
+            <div class="bg-gray-900 py-10">
+                <div class="px-4 sm:px-6 lg:px-8">
+                    <div class="sm:flex sm:items-center">
+                        <div class="sm:flex-auto">
+                            <h1 class="text-base font-semibold leading-6 text-white">Processus en cours</h1>
+                        </div>
+                    </div>
+                    <div class="mt-8 flow-root">
+                        <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                            <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+                                <table class="min-w-full divide-y divide-gray-700">
+                                    <thead>
+                                    <tr>
+                                        <th scope="col"
+                                            class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-white sm:pl-0">
+                                            Nom
+                                        </th>
+                                        <th scope="col"
+                                            class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-white sm:pl-0">
+                                            Description
+                                        </th>
+                                        <th scope="col"
+                                            class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-white sm:pl-0">
+                                            Etat
+                                        </th>
+                                        <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-0">
+                                            <span class="sr-only">Edit</span>
+                                        </th>
+                                    </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-800">
+                                    <tr>
+                                        <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-white sm:pl-0">
+                                            Bot Discord
+                                        </td>
+                                        <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-white sm:pl-0">
+                                            Commandes, envoies les messages sur les salons
+                                        </td>
+                                        <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-white sm:pl-0">
+                                            {{ attribute(states, bot_process.state) }}
+                                        </td>
+                                        <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
+                                            <span class="isolate inline-flex rounded-md">
+                                                <a href="{{ path('app_status_process_restart', {'process': 'bot'}) }}"
+                                                   class="relative inline-flex items-center rounded-md bg-green-600 px-2 py-2 text-white ring-1 ring-inset ring-green-700 hover:bg-green-700 focus:z-10">
+                                                <span class="sr-only">Redémarrer</span>
+                                                <svg class="h-5 w-5" height="24px" viewBox="0 -960 960 960"
+                                                     width="24px" fill="#e8eaed">
+                                                    <path d="M480-160q-134 0-227-93t-93-227q0-134 93-227t227-93q69 0 132 28.5T720-690v-110h80v280H520v-80h168q-32-56-87.5-88T480-720q-100 0-170 70t-70 170q0 100 70 170t170 70q77 0 139-44t87-116h84q-28 106-114 173t-196 67Z"></path>
+                                                </svg>
+                                              </a>
+                                            </span>
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-white sm:pl-0">
+                                            Keepa
+                                        </td>
+                                        <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-white sm:pl-0">
+                                            Récupération des offres Amazon
+                                        </td>
+                                        <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-white sm:pl-0">
+                                            {{ attribute(states, cron_process.state) }}
+                                        </td>
+                                        <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
+                                            <span class="isolate inline-flex rounded-md">
+                                                <a href="{{ path('app_status_process_restart', {'process': 'cron'}) }}"
+                                                   class="relative inline-flex items-center rounded-md bg-green-600 px-2 py-2 text-white ring-1 ring-inset ring-green-700 hover:bg-green-700 focus:z-10">
+                                                    <span class="sr-only">Redémarrer</span>
+                                                    <svg class="h-5 w-5" height="24px" viewBox="0 -960 960 960"
+                                                         width="24px" fill="#e8eaed">
+                                                        <path d="M480-160q-134 0-227-93t-93-227q0-134 93-227t227-93q69 0 132 28.5T720-690v-110h80v280H520v-80h168q-32-56-87.5-88T480-720q-100 0-170 70t-70 170q0 100 70 170t170 70q77 0 139-44t87-116h84q-28 106-114 173t-196 67Z"></path>
+                                                    </svg>
+                                                  </a>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock body %}

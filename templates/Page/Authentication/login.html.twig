@@ -1,0 +1,54 @@
+{% extends 'Layout/FrontOffice/base.html.twig' %}
+
+{% block body %}
+    <div class="sm:mx-auto sm:w-full sm:max-w-sm">
+        <h2 class="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-white">Connexion</h2>
+    </div>
+
+    <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
+        {{ form_start(form, {'attr': {'class': 'space-y-6'}}) }}
+        {% if error is not null %}
+            <div class="text-red-400 flex justify-center">
+                Identifiants invalides
+                {# {{ error.message }} #}
+            </div>
+        {% endif %}
+        <div>
+            <label for="email"
+                   class="block text-sm font-medium leading-6 text-white">Email</label>
+            <div class="mt-2">
+                {{ form_widget(form._username, {'attr': {'class': 'block w-full rounded-md border-0 bg-white/5 py-1.5 text-white shadow-sm ring-1 ring-inset ring-white/10 focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm sm:leading-6'}}) }}
+            </div>
+        </div>
+
+        <div>
+            <div class="flex items-center justify-between">
+                <label for="password"
+                       class="block text-sm font-medium leading-6 text-white">Mot de passe</label>
+            </div>
+            <div class="mt-2">
+                {{ form_widget(form._password, {'attr': {'class': 'block w-full rounded-md border-0 bg-white/5 py-1.5 text-white shadow-sm ring-1 ring-inset ring-white/10 focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm sm:leading-6'}}) }}
+            </div>
+        </div>
+
+        <div class="flex items-center justify-between">
+            <div class="flex items-center">
+                {{ form_widget(form._remember_me, {'attr': {'class': 'h-4 w-4 rounded border-gray-300 text-primary focus:ring-blue-600'}}) }}
+                <label for="remember-me" class="ml-3 block text-sm leading-6 text-white">Se souvenir de moi</label>
+            </div>
+
+            <div class="text-sm leading-6">
+                <a href="{{ path('app_forgot_password_request') }}"
+                   class="font-semibold text-primary hover:text-blue-800">Mot de passe oublié</a>
+            </div>
+        </div>
+
+        <div>
+            <button type="submit"
+                    class="flex w-full justify-center rounded-md bg-primary px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-blue-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500">
+                Connexion
+            </button>
+        </div>
+        {{ form_end(form) }}
+    </div>
+{% endblock body %}

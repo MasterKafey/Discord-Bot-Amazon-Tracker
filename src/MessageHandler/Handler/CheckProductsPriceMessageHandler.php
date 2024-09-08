@@ -94,7 +94,7 @@ readonly class CheckProductsPriceMessageHandler
         }
 
         if ($lastUpdate === null) {
-            $lastUpdate = KeepaTime::unixInMillisToKeepaMinutes((new \DateTime())->sub(new \DateInterval('PT' . ConfigBusiness::get('minute_interval') . 'M'))->getTimestamp());
+            $lastUpdate = KeepaTime::unixInMillisToKeepaMinutes((new \DateTime())->sub(new \DateInterval('PT' . ConfigBusiness::get('minute_interval') . 'M'))->getTimestamp() * 1000);
         }
         do {
             $this->logger->info("Request for page $page for {$offerConfiguration->getId()} offer configuration id");
@@ -127,7 +127,7 @@ readonly class CheckProductsPriceMessageHandler
 
             $this->logger->info("Current request deals number : " . count($response->deals->dr));
             foreach ($response->deals->dr as $deal) {
-                if ($lastUpdate === null || $deal->lastUpdate >= $lastUpdate) {
+                if ($deal->lastUpdate >= $lastUpdate) {
                     $filteredDeals[] = $deal;
                 } else {
                     break 2;
@@ -150,7 +150,9 @@ readonly class CheckProductsPriceMessageHandler
         $productsInfo = [];
         foreach (array_chunk($asins, 100) as $chunked_asins) {
             $asinsRequest = Request::getProductRequest($amazonDomain, 0, null, null, 0, true, $chunked_asins, ['rating' => 1]);
+            dump("Request ended");
             $response = $this->keepaAPI->sendRequestWithRetry($asinsRequest);
+            dump("Consumed: " . $response->tokensConsumed . ", products: " . count($response->products));
             if ($response->status === ResponseStatus::OK) {
                 foreach ($response->products as $product) {
                     $rating = !isset($product->csv[CSVType::RATING]) ? -1 : ProductAnalyzer::getLast($product->csv[CSVType::RATING], CSVTypeWrapper::getCSVTypeFromIndex(CSVType::RATING));
@@ -158,14 +160,14 @@ readonly class CheckProductsPriceMessageHandler
                     $newOfferCount = !isset($product->csv[CSVType::COUNT_NEW]) ? 0 : ProductAnalyzer::getLast($product->csv[CSVType::COUNT_NEW], CSVTypeWrapper::getCSVTypeFromIndex(CSVType::COUNT_NEW));
                     $salesCsv = $product->csv[CSVType::SALES] ?? [];
                     $buyBoxCsv = $product->csv[CSVType::BUY_BOX_SHIPPING] ?? [];
-                    $average180Days = ProductAnalyzer::getValueAtTime($buyBoxCsv, KeepaTime::unixInMillisToKeepaMinutes((new \DateTime())->sub(new \DateInterval('P180D'))->getTimestamp()), CSVTypeWrapper::getCSVTypeFromIndex(CSVType::BUY_BOX_SHIPPING));
+                    $average180Days = ProductAnalyzer::getValueAtTime($buyBoxCsv, KeepaTime::unixInMillisToKeepaMinutes((new \DateTime())->sub(new \DateInterval('P180D'))->getTimestamp() * 1000), CSVTypeWrapper::getCSVTypeFromIndex(CSVType::BUY_BOX_SHIPPING));
                     $currentBuyBoxPrice = ProductAnalyzer::getLast($buyBoxCsv, CSVTypeWrapper::getCSVTypeFromIndex(CSVType::BUY_BOX_SHIPPING));
 
-                    $lastSales = ProductAnalyzer::getClosestValueAtTime($salesCsv, KeepaTime::unixInMillisToKeepaMinutes((new \DateTime())->getTimestamp()), CSVTypeWrapper::getCSVTypeFromIndex(CSVType::SALES));
+                    $lastSales = ProductAnalyzer::getClosestValueAtTime($salesCsv, KeepaTime::unixInMillisToKeepaMinutes((new \DateTime())->getTimestamp() * 1000), CSVTypeWrapper::getCSVTypeFromIndex(CSVType::SALES));
 
-                    $drops30Days = ProductAnalyzer::getClosestValueAtTime($salesCsv, KeepaTime::unixInMillisToKeepaMinutes((new \DateTime())->sub(new \DateInterval('P30D'))->getTimestamp()), CSVTypeWrapper::getCSVTypeFromIndex(CSVType::SALES));
-                    $drops90Days = ProductAnalyzer::getClosestValueAtTime($salesCsv, KeepaTime::unixInMillisToKeepaMinutes((new \DateTime())->sub(new \DateInterval('P90D'))->getTimestamp()), CSVTypeWrapper::getCSVTypeFromIndex(CSVType::SALES));
-                    $drops180Days = ProductAnalyzer::getClosestValueAtTime($salesCsv, KeepaTime::unixInMillisToKeepaMinutes((new \DateTime())->sub(new \DateInterval('P180D'))->getTimestamp()), CSVTypeWrapper::getCSVTypeFromIndex(CSVType::SALES));
+                    $drops30Days = ProductAnalyzer::getClosestValueAtTime($salesCsv, KeepaTime::unixInMillisToKeepaMinutes((new \DateTime())->sub(new \DateInterval('P30D'))->getTimestamp() * 1000), CSVTypeWrapper::getCSVTypeFromIndex(CSVType::SALES));
+                    $drops90Days = ProductAnalyzer::getClosestValueAtTime($salesCsv, KeepaTime::unixInMillisToKeepaMinutes((new \DateTime())->sub(new \DateInterval('P90D'))->getTimestamp() * 1000), CSVTypeWrapper::getCSVTypeFromIndex(CSVType::SALES));
+                    $drops180Days = ProductAnalyzer::getClosestValueAtTime($salesCsv, KeepaTime::unixInMillisToKeepaMinutes((new \DateTime())->sub(new \DateInterval('P180D'))->getTimestamp() * 1000), CSVTypeWrapper::getCSVTypeFromIndex(CSVType::SALES));
                     if ($rating === null) {
                         $rating = 0;
                     }

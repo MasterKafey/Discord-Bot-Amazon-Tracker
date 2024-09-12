@@ -20,7 +20,7 @@ final class Version20240912081837 extends AbstractMigration
     public function up(Schema $schema): void
     {
         // this up() migration is auto-generated, please modify it to your needs
-        $this->addSql('ALTER TABLE offer_configuration ADD roles LONGTEXT NOT NULL');
+        $this->addSql('ALTER TABLE offer_configuration ADD roles LONGTEXT NULL');
     }
 
     public function down(Schema $schema): void

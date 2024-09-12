@@ -62,7 +62,7 @@ class OfferConfiguration
     #[ORM\Column(type: Types::STRING, options: ['default' => self::BUYER_VIEW])]
     private string $view = self::BUYER_VIEW;
 
-    #[ORM\Column(type: Types::SIMPLE_ARRAY, nullable: false)]
+    #[ORM\Column(type: Types::SIMPLE_ARRAY, nullable: true)]
     private array $roles = [];
 
     public function getId(): ?int

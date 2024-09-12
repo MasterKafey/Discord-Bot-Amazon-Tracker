@@ -49,19 +49,25 @@
                 </div>
 
                 <div class="sm:col-span-3">
-                    {{ form_label(form.minimumPrice, 'Prix minimum', {'label_attr': {'class': 'block text-sm font-medium leading-6 text-white'}}) }}
-                    <div class="mt-2">
-                        {{ form_widget(form.minimumPrice, {'attr': {'class': '"block w-full rounded-md border-0 bg-white/5 py-1.5 text-white shadow-sm ring-1 ring-inset ring-white/10 focus:ring-2 focus:ring-inset focus:ring-indigo-500 sm:text-sm sm:leading-6"', 'placeholder': '123456...'}}) }}
-                    </div>
-                </div>
-
-                <div class="sm:col-span-3">
                     {{ form_label(form.categories, 'Catégories exclues', {'label_attr': {'class': 'block text-sm font-medium leading-6 text-white'}}) }}
                     <div class="mt-2">
                         {{ form_widget(form.categories, {'attr': {'placeholder': 'Séparez les valeurs par des virgules', 'class': 'block w-full rounded-md border-0 bg-white/5 py-1.5 text-white shadow-sm ring-1 ring-inset ring-white/10 focus:ring-2 focus:ring-inset focus:ring-indigo-500 sm:text-sm sm:leading-6'}}) }}
                     </div>
                 </div>
 
+                <div class="sm:col-span-3">
+                    {{ form_label(form.roles, 'Roles notifiés', {'label_attr': {'class': 'block text-sm font-medium leading-6 text-white'}}) }}
+                    <div class="mt-2">
+                        {{ form_widget(form.roles, {'attr': {'placeholder': 'Séparez les valeurs par des virgules', 'class': 'block w-full rounded-md border-0 bg-white/5 py-1.5 text-white shadow-sm ring-1 ring-inset ring-white/10 focus:ring-2 focus:ring-inset focus:ring-indigo-500 sm:text-sm sm:leading-6'}}) }}
+                    </div>
+                </div>
+
+                <div class="sm:col-span-3">
+                    {{ form_label(form.minimumPrice, 'Prix minimum', {'label_attr': {'class': 'block text-sm font-medium leading-6 text-white'}}) }}
+                    <div class="mt-2">
+                        {{ form_widget(form.minimumPrice, {'attr': {'class': '"block w-full rounded-md border-0 bg-white/5 py-1.5 text-white shadow-sm ring-1 ring-inset ring-white/10 focus:ring-2 focus:ring-inset focus:ring-indigo-500 sm:text-sm sm:leading-6"', 'placeholder': '123456...'}}) }}
+                    </div>
+                </div>
             </div>
 
             <div class="mt-8 flex">

@@ -150,9 +150,7 @@ readonly class CheckProductsPriceMessageHandler
         $productsInfo = [];
         foreach (array_chunk($asins, 100) as $chunked_asins) {
             $asinsRequest = Request::getProductRequest($amazonDomain, 0, null, null, 0, true, $chunked_asins, ['rating' => 1]);
-            dump("Request ended");
             $response = $this->keepaAPI->sendRequestWithRetry($asinsRequest);
-            dump("Consumed: " . $response->tokensConsumed . ", products: " . count($response->products));
             if ($response->status === ResponseStatus::OK) {
                 foreach ($response->products as $product) {
                     $rating = !isset($product->csv[CSVType::RATING]) ? -1 : ProductAnalyzer::getLast($product->csv[CSVType::RATING], CSVTypeWrapper::getCSVTypeFromIndex(CSVType::RATING));
@@ -307,6 +305,7 @@ readonly class CheckProductsPriceMessageHandler
                 'view' => $offerConfiguration->getView(),
                 'info' => $productsInfo[$asin],
                 'last_update' => $filteredDeal->lastUpdate ?? -1,
+                'roles' => $offerConfiguration->getRoles(),
             ];
 
             if ($filteredDeal->image !== null) {

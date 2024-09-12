@@ -62,6 +62,9 @@ class OfferConfiguration
     #[ORM\Column(type: Types::STRING, options: ['default' => self::BUYER_VIEW])]
     private string $view = self::BUYER_VIEW;
 
+    #[ORM\Column(type: Types::SIMPLE_ARRAY, nullable: false)]
+    private array $roles = [];
+
     public function getId(): ?int
     {
         return $this->id;
@@ -200,6 +203,23 @@ class OfferConfiguration
     public function setView(string $view): self
     {
         $this->view = $view;
+        return $this;
+    }
+
+    public function getRoles(): array
+    {
+        return $this->roles;
+    }
+
+    public function setRoles(array $roles): self
+    {
+        $this->roles = $roles;
+        return $this;
+    }
+
+    public function addRole(string $role): self
+    {
+        $this->roles[] = $role;
         return $this;
     }
 }

@@ -10,7 +10,7 @@ use Discord\Parts\Interactions\Interaction;
 use Doctrine\ORM\EntityManagerInterface;
 use React\Promise\PromiseInterface;
 
-class AddCategoryCommand extends AbstractDiscordCommand
+class AddRoleCommand extends AbstractDiscordCommand
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager
@@ -21,7 +21,7 @@ class AddCategoryCommand extends AbstractDiscordCommand
 
     public function getName(): string
     {
-        return 'add-category';
+        return 'add-role';
     }
 
     public function getOptions(): array
@@ -34,17 +34,17 @@ class AddCategoryCommand extends AbstractDiscordCommand
                 'description' => "L'id de la configuration de l'offre que vous souhaitez modifier"
             ],
             [
-                'name' => 'node-category',
-                'type' => Option::STRING,
+                'name' => 'role',
+                'type' => Option::ROLE,
                 'required' => true,
-                'description' => 'Noeud de la catégorie que vous voulez inclure',
+                'description' => 'Role que vous souhaitez notifier',
             ],
         ];
     }
 
     public function getDescription(): string
     {
-        return "Ajoute une categorie à la configuration d'offre";
+        return "Ajoute un role à la configuration d'offre";
     }
 
     public function execute(Interaction $interaction): ?PromiseInterface
@@ -56,9 +56,9 @@ class AddCategoryCommand extends AbstractDiscordCommand
             return $interaction->respondWithMessage(MessageBuilder::new()->setContent("La configuration d'offre avec l'id $configurationId n'existe pas\nUtilisez la commande /list-offer-configuration pour obtenir un id valide"));
         }
 
-        $configuration->addCategory($categoryNode = $interaction->data->options->get('name', 'node-category')->value);
+        $configuration->addRole($roleId = $interaction->data->options->get('name', 'role')->value);
         $this->entityManager->flush();
 
-        return $interaction->respondWithMessage(MessageBuilder::new()->setContent("La categorie avec le noeud $categoryNode a été ajouté avec succés"));
+        return $interaction->respondWithMessage(MessageBuilder::new()->setContent("Le role <@&$roleId> a été ajouté avec succés"));
     }
 }

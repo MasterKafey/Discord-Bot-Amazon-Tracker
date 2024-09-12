@@ -45,9 +45,13 @@ class OfferConfigurationType extends AbstractType
             ->add('categories', TextareaType::class, [
                 'required' => false
             ])
+            ->add('roles', TextareaType::class, [
+                'required' => false
+            ])
         ;
 
         $builder->get('categories')->addModelTransformer(new ArrayToStringTransformer());
+        $builder->get('roles')->addModelTransformer(new ArrayToStringTransformer());
     }
 
     public function configureOptions(OptionsResolver $resolver): void

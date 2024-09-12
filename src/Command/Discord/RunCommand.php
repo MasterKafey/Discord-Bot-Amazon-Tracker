@@ -42,7 +42,7 @@ class RunCommand extends Command
         private readonly Discord           $discord,
         private readonly LoggerInterface   $logger,
         private readonly ReceiverInterface $receiver,
-        private readonly ConfigBusiness $configBusiness,
+        private readonly ConfigBusiness    $configBusiness,
     )
     {
         parent::__construct();
@@ -256,7 +256,7 @@ class RunCommand extends Command
 
         $promises = [];
         foreach (array_chunk($embeds, 10) as $chunkEmbed) {
-            $promises[] = $this->discord->getChannel($message->getChannelId())->sendMessage(MessageBuilder::new()->setEmbeds($chunkEmbed));
+            $promises[] = $this->discord->getChannel($message->getChannelId())->sendMessage(MessageBuilder::new()->setEmbeds($chunkEmbed)->setContent(join('', array_map(function (string $role) {return "<@&$role>";}, $payload['roles'] ?? []))));
         }
 
         return all($promises);

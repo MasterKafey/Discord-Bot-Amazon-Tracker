@@ -47,8 +47,8 @@ readonly class CheckProductsPriceMessageHandler
 
     public function offerConfigurationCheck(OfferConfiguration $offerConfiguration): void
     {
-        $minRating = $this->configBusiness->get('rating_warning');
-        $minReview = $this->configBusiness->get('review_warning');
+//        $minRating = $this->configBusiness->get('rating_warning');
+//        $minReview = $this->configBusiness->get('review_warning');
         $amazonDomain = $offerConfiguration->getDomain();
         $excludedDomains = $this->entityManager->getRepository(ExcludedCategory::class)->findAll();
         $currentTime = floor(time() / 60) * 60;
@@ -142,72 +142,72 @@ readonly class CheckProductsPriceMessageHandler
         }
 
         $this->logger->info("Output channel id : {$offerConfiguration->getChannelId()}");
-
-        $asins = array_map(function (Deal $deal) {
-            return $deal->asin;
-        }, $filteredDeals);
+//
+//        $asins = array_map(function (Deal $deal) {
+//            return $deal->asin;
+//        }, $filteredDeals);
 
         $productsInfo = [];
-        foreach (array_chunk($asins, 100) as $chunked_asins) {
-            $asinsRequest = Request::getProductRequest($amazonDomain, 0, null, null, 0, true, $chunked_asins, ['rating' => 1]);
-            $response = $this->keepaAPI->sendRequestWithRetry($asinsRequest);
-            if ($response->status === ResponseStatus::OK) {
-                foreach ($response->products as $product) {
-                    $rating = !isset($product->csv[CSVType::RATING]) ? -1 : ProductAnalyzer::getLast($product->csv[CSVType::RATING], CSVTypeWrapper::getCSVTypeFromIndex(CSVType::RATING));
-                    $reviews = !isset($product->csv[CSVType::COUNT_REVIEWS]) ? -1 : ProductAnalyzer::getLast($product->csv[CSVType::COUNT_REVIEWS], CSVTypeWrapper::getCSVTypeFromIndex(CSVType::COUNT_REVIEWS));
-                    $newOfferCount = !isset($product->csv[CSVType::COUNT_NEW]) ? 0 : ProductAnalyzer::getLast($product->csv[CSVType::COUNT_NEW], CSVTypeWrapper::getCSVTypeFromIndex(CSVType::COUNT_NEW));
-                    $salesCsv = $product->csv[CSVType::SALES] ?? [];
-                    $buyBoxCsv = $product->csv[CSVType::BUY_BOX_SHIPPING] ?? [];
-                    $average180Days = ProductAnalyzer::getValueAtTime($buyBoxCsv, KeepaTime::unixInMillisToKeepaMinutes((new \DateTime())->sub(new \DateInterval('P180D'))->getTimestamp() * 1000), CSVTypeWrapper::getCSVTypeFromIndex(CSVType::BUY_BOX_SHIPPING));
-                    $currentBuyBoxPrice = ProductAnalyzer::getLast($buyBoxCsv, CSVTypeWrapper::getCSVTypeFromIndex(CSVType::BUY_BOX_SHIPPING));
-
-                    $lastSales = ProductAnalyzer::getClosestValueAtTime($salesCsv, KeepaTime::unixInMillisToKeepaMinutes((new \DateTime())->getTimestamp() * 1000), CSVTypeWrapper::getCSVTypeFromIndex(CSVType::SALES));
-
-                    $drops30Days = ProductAnalyzer::getClosestValueAtTime($salesCsv, KeepaTime::unixInMillisToKeepaMinutes((new \DateTime())->sub(new \DateInterval('P30D'))->getTimestamp() * 1000), CSVTypeWrapper::getCSVTypeFromIndex(CSVType::SALES));
-                    $drops90Days = ProductAnalyzer::getClosestValueAtTime($salesCsv, KeepaTime::unixInMillisToKeepaMinutes((new \DateTime())->sub(new \DateInterval('P90D'))->getTimestamp() * 1000), CSVTypeWrapper::getCSVTypeFromIndex(CSVType::SALES));
-                    $drops180Days = ProductAnalyzer::getClosestValueAtTime($salesCsv, KeepaTime::unixInMillisToKeepaMinutes((new \DateTime())->sub(new \DateInterval('P180D'))->getTimestamp() * 1000), CSVTypeWrapper::getCSVTypeFromIndex(CSVType::SALES));
-                    if ($rating === null) {
-                        $rating = 0;
-                    }
-
-                    if ($reviews === null || $reviews < 0) {
-                        $reviews = 0;
-                    }
-                    if ($newOfferCount === null || $newOfferCount < 0) {
-                        $newOfferCount = 0;
-                    }
-
-                    if ($lastSales === null || $lastSales < 0) {
-                        $lastSales = 0;
-                    }
-
-                    $productsInfo[$product->asin] = [
-                        'rating' => $rating,
-                        'reviews' => $reviews,
-                        'dimension' => [
-                            'height' => $product->packageHeight,
-                            'length' => $product->packageLength,
-                            'width' => $product->packageWidth,
-                            'weight' => $product->packageWeight,
-                        ],
-                        'fba_fees' => $product->fbaFees ?? 0,
-                        'referral_fee_percentage' => $product->referralFeePercentage ?? 0,
-                        'ean_list' => $product->eanList,
-                        'new_offer_count' => $newOfferCount,
-                        'last_sales' => $lastSales,
-                        'drops' => [
-                            '30_days' => $drops30Days,
-                            '90_days' => $drops90Days,
-                            '180_days' => $drops180Days,
-                        ],
-                        'average_buy_box' => [
-                            '180_days' => $average180Days,
-                        ],
-                        'current_buy_box_price' => $currentBuyBoxPrice,
-                    ];
-                }
-            }
-        }
+//        foreach (array_chunk($asins, 100) as $chunked_asins) {
+//            $asinsRequest = Request::getProductRequest($amazonDomain, 0, null, null, 0, true, $chunked_asins, ['rating' => 1]);
+//            $response = $this->keepaAPI->sendRequestWithRetry($asinsRequest);
+//            if ($response->status === ResponseStatus::OK) {
+//                foreach ($response->products as $product) {
+//                    $rating = !isset($product->csv[CSVType::RATING]) ? -1 : ProductAnalyzer::getLast($product->csv[CSVType::RATING], CSVTypeWrapper::getCSVTypeFromIndex(CSVType::RATING));
+//                    $reviews = !isset($product->csv[CSVType::COUNT_REVIEWS]) ? -1 : ProductAnalyzer::getLast($product->csv[CSVType::COUNT_REVIEWS], CSVTypeWrapper::getCSVTypeFromIndex(CSVType::COUNT_REVIEWS));
+//                    $newOfferCount = !isset($product->csv[CSVType::COUNT_NEW]) ? 0 : ProductAnalyzer::getLast($product->csv[CSVType::COUNT_NEW], CSVTypeWrapper::getCSVTypeFromIndex(CSVType::COUNT_NEW));
+//                    $salesCsv = $product->csv[CSVType::SALES] ?? [];
+//                    $buyBoxCsv = $product->csv[CSVType::BUY_BOX_SHIPPING] ?? [];
+//                    $average180Days = ProductAnalyzer::getValueAtTime($buyBoxCsv, KeepaTime::unixInMillisToKeepaMinutes((new \DateTime())->sub(new \DateInterval('P180D'))->getTimestamp() * 1000), CSVTypeWrapper::getCSVTypeFromIndex(CSVType::BUY_BOX_SHIPPING));
+//                    $currentBuyBoxPrice = ProductAnalyzer::getLast($buyBoxCsv, CSVTypeWrapper::getCSVTypeFromIndex(CSVType::BUY_BOX_SHIPPING));
+//
+//                    $lastSales = ProductAnalyzer::getClosestValueAtTime($salesCsv, KeepaTime::unixInMillisToKeepaMinutes((new \DateTime())->getTimestamp() * 1000), CSVTypeWrapper::getCSVTypeFromIndex(CSVType::SALES));
+//
+//                    $drops30Days = ProductAnalyzer::getClosestValueAtTime($salesCsv, KeepaTime::unixInMillisToKeepaMinutes((new \DateTime())->sub(new \DateInterval('P30D'))->getTimestamp() * 1000), CSVTypeWrapper::getCSVTypeFromIndex(CSVType::SALES));
+//                    $drops90Days = ProductAnalyzer::getClosestValueAtTime($salesCsv, KeepaTime::unixInMillisToKeepaMinutes((new \DateTime())->sub(new \DateInterval('P90D'))->getTimestamp() * 1000), CSVTypeWrapper::getCSVTypeFromIndex(CSVType::SALES));
+//                    $drops180Days = ProductAnalyzer::getClosestValueAtTime($salesCsv, KeepaTime::unixInMillisToKeepaMinutes((new \DateTime())->sub(new \DateInterval('P180D'))->getTimestamp() * 1000), CSVTypeWrapper::getCSVTypeFromIndex(CSVType::SALES));
+//                    if ($rating === null) {
+//                        $rating = 0;
+//                    }
+//
+//                    if ($reviews === null || $reviews < 0) {
+//                        $reviews = 0;
+//                    }
+//                    if ($newOfferCount === null || $newOfferCount < 0) {
+//                        $newOfferCount = 0;
+//                    }
+//
+//                    if ($lastSales === null || $lastSales < 0) {
+//                        $lastSales = 0;
+//                    }
+//
+//                    $productsInfo[$product->asin] = [
+//                        'rating' => $rating,
+//                        'reviews' => $reviews,
+//                        'dimension' => [
+//                            'height' => $product->packageHeight,
+//                            'length' => $product->packageLength,
+//                            'width' => $product->packageWidth,
+//                            'weight' => $product->packageWeight,
+//                        ],
+//                        'fba_fees' => $product->fbaFees ?? 0,
+//                        'referral_fee_percentage' => $product->referralFeePercentage ?? 0,
+//                        'ean_list' => $product->eanList,
+//                        'new_offer_count' => $newOfferCount,
+//                        'last_sales' => $lastSales,
+//                        'drops' => [
+//                            '30_days' => $drops30Days,
+//                            '90_days' => $drops90Days,
+//                            '180_days' => $drops180Days,
+//                        ],
+//                        'average_buy_box' => [
+//                            '180_days' => $average180Days,
+//                        ],
+//                        'current_buy_box_price' => $currentBuyBoxPrice,
+//                    ];
+//                }
+//            }
+//        }
 
         $offersRemoved = 0;
         /** @var Deal $filteredDeal */
@@ -231,24 +231,19 @@ readonly class CheckProductsPriceMessageHandler
                 }
             }
 
-            [
-                'rating' => $currentRating,
-                'reviews' => $currentReviews,
-                'last_sales' => $lastSales,
-            ] = $productsInfo[$filteredDeal->asin];
-
-
-            if ($currentReviews < $this->configBusiness->get('min_reviews')) {
-                $offersRemoved++;
-                continue;
-            }
-
-            if ($currentRating < $this->configBusiness->get('min_rating')) {
-                $offersRemoved++;
-                continue;
-            }
-
-//            if ($lastSales < $this->configBusiness->get('min_sales')) {
+//            [
+//                'rating' => $currentRating,
+//                'reviews' => $currentReviews,
+//                'last_sales' => $lastSales,
+//            ] = $productsInfo[$filteredDeal->asin];
+//
+//
+//            if ($currentReviews < $this->configBusiness->get('min_reviews')) {
+//                $offersRemoved++;
+//                continue;
+//            }
+//
+//            if ($currentRating < $this->configBusiness->get('min_rating')) {
 //                $offersRemoved++;
 //                continue;
 //            }
@@ -279,9 +274,9 @@ readonly class CheckProductsPriceMessageHandler
                 'tbm' => 'shop'
             ]);
 
-            if ($currentRating <= 0 || $currentReviews <= 0) {
+            /*if (false$currentRating <= 0 || $currentReviews <= 0) {
                 $author = "⚠️ Attention : Cet article n'a aucun avis, faites vos propres recherches avant d'acheter";
-            } else if ($offerConfiguration->isPremium()) {
+            } else*/ if ($offerConfiguration->isPremium()) {
                 $author = "Un nouveau produit en erreur de prix a été trouvé";
             } else {
                 $author = "Vous utilisez la version gratuite, devenez premium pour débloquer les fonctionnalités plus puissantes";
@@ -294,16 +289,16 @@ readonly class CheckProductsPriceMessageHandler
                 'previousPrice' => $previousPrice,
                 'weekAverage' => $weekAverage,
                 'currentPrice' => $currentPrice,
-                'currentRating' => $currentRating,
+                'currentRating' => $currentRating ?? null,
                 'percentage' => $percentage,
                 'flag' => $flag,
                 'googleUrl' => "https://google.com/search?$googleSearchQuery",
                 'aliexpressUrl' => "https://fr.aliexpress.com/w/wholesale-" . urlencode(str_replace(' ', '-', trim($filteredDeal->title))) . '.html',
                 'asin' => $asin,
                 'domain' => $domain,
-                'reviews' => $currentReviews,
+                'reviews' => $currentReviews ?? null,
                 'view' => $offerConfiguration->getView(),
-                'info' => $productsInfo[$asin],
+                'info' => $productsInfo[$asin] ?? [],
                 'last_update' => $filteredDeal->lastUpdate ?? -1,
                 'roles' => $offerConfiguration->getRoles(),
             ];
@@ -312,9 +307,9 @@ readonly class CheckProductsPriceMessageHandler
                 $payloads[$asin]['thumbnail'] = 'https://images-na.ssl-images-amazon.com/images/I/' . implode('', array_map('chr', $filteredDeal->image));
             }
 
-            if ($currentRating < $minRating || $currentReviews < $minReview) {
-                $payloads[$asin]['footer'] = "📍 Vigilance : ce produit peut ne pas être fiable (mauvaise notes, faibles commentaires ...) - vérifiez avant d'acheter";
-            }
+//            if ($currentRating < $minRating || $currentReviews < $minReview) {
+//                $payloads[$asin]['footer'] = "📍 Vigilance : ce produit peut ne pas être fiable (mauvaise notes, faibles commentaires ...) - vérifiez avant d'acheter";
+//            }
         }
 
         $offers = array_keys($offerConfiguration->getLastOffersSent());

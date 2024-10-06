@@ -142,7 +142,7 @@ class RunCommand extends Command
             $author = $payload['author'];
             $weekAverage = $payload['weekAverage'];
             $currentPrice = $payload['currentPrice'];
-            $currentRating = $payload['currentRating'];
+            //$currentRating = $payload['currentRating'];
             $percentage = $payload['percentage'];
             $flag = $payload['flag'];
             $thumbnail = $payload['thumbnail'] ?? null;
@@ -151,9 +151,9 @@ class RunCommand extends Command
             $aliexpressURL = $payload['aliexpressUrl'];
             $asin = $payload['asin'];
             $domain = $payload['domain'];
-            $reviews = $payload['reviews'];
-            $view = $payload['view'] ?? OfferConfiguration::BUYER_VIEW;
-            $infos = $payload['info'];
+            //$reviews = $payload['reviews'];
+//            $view = $payload['view'] ?? OfferConfiguration::BUYER_VIEW;
+//            $infos = $payload['info'];
 
             $amazonEmojiId = $this->configBusiness->get('amazon_emoji_id');
             $googleEmojiId = $this->configBusiness->get('google_emoji_id');
@@ -164,84 +164,13 @@ class RunCommand extends Command
                 ->setURL($payload['url'])
                 ->setImage("https://graph.keepa.com/pricehistory.png?" . http_build_query(['asin' => $asin, 'domain' => $domain]));
 
-            if ($view === OfferConfiguration::BUYER_VIEW) {
-                $embed
-                    ->addFieldValues('Prix moyen', $weekAverage !== -2 ? number_format($weekAverage / 100, 2) . "€" : "-", true)
-                    ->addFieldValues('Nouveau prix', number_format($currentPrice / 100, 2) . "€", true)
-                    ->addFieldValues('Réduction', "$percentage%", true)
-                    ->addFieldValues('Note', $currentRating === 0 ? 'Aucune' : $currentRating / 10, true)
-                    ->addFieldValues('Avis', $reviews === 0 ? 'Aucun' : $reviews, true)
-                    ->addFieldValues('Comparer sur', "[" . (null === $googleEmojiId ? '' : "<:google:$googleEmojiId>") . " Google]($googleUrl) [" . (null === $aliexpressEmojiId ? '' : "<:aliexpress:$aliexpressEmojiId>") . " Aliexpress]($aliexpressURL)");
-            } else if ($view === OfferConfiguration::SELLER_VIEW) {
-                $dimension = $infos['dimension'] ?? null;
-                $embed->addFieldValues('ASIN', $asin, true);
-                $eanList = $infos['ean_list'];
-                $drops = $infos['drops'];
-                $referralFeePercentage = $infos['referral_fee_percentage'];
-                $fbaFees = $infos['fba_fees']?->pickAndPackFee ?? 0;
-                $currentBuyBoxPrice = $infos['current_buy_box_price'];
-
-                if (!empty($eanList)) {
-                    $embed->addFieldValues('EAN', implode(', ', $eanList));
-                }
-
-                if (null !== $dimension) {
-                    $height = ($dimension['height'] ?? 0) / 10;
-                    $width = ($dimension['width'] ?? 0) / 10;
-                    $length = ($dimension['length'] ?? 0) / 10;
-
-                    if (!in_array(0, [$height, $width, $length])) {
-                        $embed
-                            ->addFieldValues('Dimension', "$height * $width * $length cm", true);
-                    }
-                    $weight = $dimension['weight'] ?? 0;
-                    if ($weight !== 0) {
-                        $embed->addFieldValues('Poids', "$weight g", true);
-                    }
-                }
-                $newOfferCount = $infos['new_offer_count'] ?? 0;
-                if ($newOfferCount !== 0) {
-                    $embed->addFieldValues("Nombre d'offres", $newOfferCount, true);
-                }
-
-                $day30 = $drops['30_days'];
-                $day90 = $drops['90_days'];
-                $day180 = $drops['180_days'];
-
-                if ((array_count_values([$day30, $day90, $day180])[0] ?? 0) !== 3) {
-                    $embed->addFieldValues('Classement ventes', '');
-                    $first = true;
-                    if (0 !== $day30) {
-                        $embed->addFieldValues('Drop 30 jours', $day30, true);
-                        $first = false;
-                    }
-
-                    if (0 !== $day90) {
-                        $embed->addFieldValues('Drop 90 jours', $day90, $first);
-                        $first = false;
-                    }
-
-                    if (0 !== $day180) {
-                        $embed->addFieldValues('Drop 180 jours', $day180, $first);
-                    }
-                }
-
-                if ((0 !== $averageBuyBox180Days = $infos['average_buy_box']['180_days']) || -1 !== $averageBuyBox180Days) {
-                    $embed->addFieldValues('Buy Box - 180 jours', $averageBuyBox180Days);
-                }
-
-                if (0 !== $fbaFees) {
-                    $embed->addFieldValues("FBA Fees", number_format($fbaFees / 100, 2), true);
-                }
-
-                if (0 !== $referralFeePercentage) {
-                    $embed->addFieldValues('Pourcentage Fee', $referralFeePercentage . '%', true);
-                }
-
-                if (0 !== $currentBuyBoxPrice && 0 !== $referralFeePercentage) {
-                    $embed->addFieldValues('', number_format($currentBuyBoxPrice * $referralFeePercentage / 10000, 2), true);
-                }
-            }
+            $embed
+                ->addFieldValues('Prix moyen', $weekAverage !== -2 ? number_format($weekAverage / 100, 2) . "€" : "-", true)
+                ->addFieldValues('Nouveau prix', number_format($currentPrice / 100, 2) . "€", true)
+                ->addFieldValues('Réduction', "$percentage%", true)
+                ->addFieldValues('Note', /*$currentRating === 0 ? 'Aucune' : $currentRating / 10*/ '-', true)
+                ->addFieldValues('Avis',/*$reviews === 0 ? 'Aucun' : $reviews*/ '-', true)
+                ->addFieldValues('Comparer sur', "[" . (null === $googleEmojiId ? '' : "<:google:$googleEmojiId>") . " Google]($googleUrl) [" . (null === $aliexpressEmojiId ? '' : "<:aliexpress:$aliexpressEmojiId>") . " Aliexpress]($aliexpressURL)");
 
             if ($thumbnail !== null) {
                 $embed->setThumbnail($thumbnail);
@@ -256,7 +185,9 @@ class RunCommand extends Command
 
         $promises = [];
         foreach (array_chunk($embeds, 10) as $chunkEmbed) {
-            $promises[] = $this->discord->getChannel($message->getChannelId())->sendMessage(MessageBuilder::new()->setEmbeds($chunkEmbed)->setContent(join('', array_map(function (string $role) {return "<@&$role>";}, $payload['roles'] ?? []))));
+            $promises[] = $this->discord->getChannel($message->getChannelId())->sendMessage(MessageBuilder::new()->setEmbeds($chunkEmbed)->setContent(join('', array_map(function (string $role) {
+                return "<@&$role>";
+            }, $payload['roles'] ?? []))));
         }
 
         return all($promises);

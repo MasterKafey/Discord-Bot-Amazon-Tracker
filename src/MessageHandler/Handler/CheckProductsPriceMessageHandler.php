@@ -214,7 +214,7 @@ readonly class CheckProductsPriceMessageHandler
         $payloads = [];
         foreach ($filteredDeals as $filteredDeal) {
             $currentPrice = $filteredDeal->current[CSVType::MARKET_NEW];
-            $previousPrice = $currentPrice + (-1 * $filteredDeal->deltaLast[CSVType::MARKET_NEW]);
+            $previousPrice = $currentPrice + $filteredDeal->deltaLast[CSVType::MARKET_NEW];
             $weekAverage = $filteredDeal->avg[2][CSVType::MARKET_NEW];
 
             if ($currentPrice === $previousPrice) {

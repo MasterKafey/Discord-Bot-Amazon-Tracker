@@ -3,6 +3,7 @@
 namespace App\Discord\Command\OfferConfiguration;
 
 use App\Discord\Command\AbstractDiscordCommand;
+use App\Discord\Command\AbstractServerDiscordCommand;
 use App\Entity\OfferConfiguration;
 use Discord\Builders\MessageBuilder;
 use Discord\Parts\Interactions\Command\Option;
@@ -10,7 +11,7 @@ use Discord\Parts\Interactions\Interaction;
 use Doctrine\ORM\EntityManagerInterface;
 use React\Promise\PromiseInterface;
 
-class ToggleWeekAverageCommand extends AbstractDiscordCommand
+class ToggleWeekAverageCommand extends AbstractServerDiscordCommand
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager
@@ -41,7 +42,7 @@ class ToggleWeekAverageCommand extends AbstractDiscordCommand
         return "Activer/Désactiver le filtrage par moyenne de la semaine";
     }
 
-    public function execute(Interaction $interaction): ?PromiseInterface
+    public function serverExecute(Interaction $interaction): ?PromiseInterface
     {
         $configurationId = $interaction->data->options->get('name', 'offer-configuration-id')->value;
         $configuration = $this->entityManager->getRepository(OfferConfiguration::class)->find($configurationId);

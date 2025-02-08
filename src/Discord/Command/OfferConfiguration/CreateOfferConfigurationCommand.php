@@ -3,6 +3,7 @@
 namespace App\Discord\Command\OfferConfiguration;
 
 use App\Discord\Command\AbstractDiscordCommand;
+use App\Discord\Command\AbstractServerDiscordCommand;
 use App\Entity\OfferConfiguration;
 use App\Repository\OfferConfigurationRepository;
 use Discord\Builders\MessageBuilder;
@@ -12,7 +13,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Keepa\objects\AmazonLocale;
 use React\Promise\PromiseInterface;
 
-class CreateOfferConfigurationCommand extends AbstractDiscordCommand
+class CreateOfferConfigurationCommand extends AbstractServerDiscordCommand
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager
@@ -75,7 +76,7 @@ class CreateOfferConfigurationCommand extends AbstractDiscordCommand
         ];
     }
 
-    public function execute(Interaction $interaction): ?PromiseInterface
+    public function serverExecute(Interaction $interaction): ?PromiseInterface
     {
         $domain = strtoupper($interaction->data->options->get('name', 'domain')->value);
 

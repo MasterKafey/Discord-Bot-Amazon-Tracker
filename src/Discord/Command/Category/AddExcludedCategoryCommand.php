@@ -3,6 +3,7 @@
 namespace App\Discord\Command\Category;
 
 use App\Discord\Command\AbstractDiscordCommand;
+use App\Discord\Command\AbstractServerDiscordCommand;
 use App\Entity\ExcludedCategory;
 use Discord\Builders\MessageBuilder;
 use Discord\Parts\Interactions\Command\Option;
@@ -11,7 +12,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use React\Promise\PromiseInterface;
 
-class AddExcludedCategoryCommand extends AbstractDiscordCommand
+class AddExcludedCategoryCommand extends AbstractServerDiscordCommand
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
@@ -42,7 +43,7 @@ class AddExcludedCategoryCommand extends AbstractDiscordCommand
         ];
     }
 
-    public function execute(Interaction $interaction): ?PromiseInterface
+    public function serverExecute(Interaction $interaction): ?PromiseInterface
     {
         $nodeCategory = $interaction->data->options->get('name', 'category-node')->value;
 

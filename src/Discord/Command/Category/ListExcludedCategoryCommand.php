@@ -3,6 +3,7 @@
 namespace App\Discord\Command\Category;
 
 use App\Discord\Command\AbstractDiscordCommand;
+use App\Discord\Command\AbstractServerDiscordCommand;
 use App\Entity\ExcludedCategory;
 use Discord\Builders\MessageBuilder;
 use Discord\Discord;
@@ -11,7 +12,7 @@ use Discord\Parts\Interactions\Interaction;
 use Doctrine\ORM\EntityManagerInterface;
 use React\Promise\PromiseInterface;
 
-class ListExcludedCategoryCommand extends AbstractDiscordCommand
+class ListExcludedCategoryCommand extends AbstractServerDiscordCommand
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
@@ -31,7 +32,7 @@ class ListExcludedCategoryCommand extends AbstractDiscordCommand
         return 'Lister les numéro de catégories exclues';
     }
 
-    public function execute(Interaction $interaction): ?PromiseInterface
+    public function serverExecute(Interaction $interaction): ?PromiseInterface
     {
         $categories = $this->entityManager->getRepository(ExcludedCategory::class)->findAll();
 

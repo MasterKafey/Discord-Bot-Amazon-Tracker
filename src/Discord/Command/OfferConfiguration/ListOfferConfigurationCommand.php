@@ -3,6 +3,7 @@
 namespace App\Discord\Command\OfferConfiguration;
 
 use App\Discord\Command\AbstractDiscordCommand;
+use App\Discord\Command\AbstractServerDiscordCommand;
 use App\Entity\OfferConfiguration;
 use Discord\Builders\MessageBuilder;
 use Discord\Discord;
@@ -11,7 +12,7 @@ use Discord\Parts\Interactions\Interaction;
 use Doctrine\ORM\EntityManagerInterface;
 use React\Promise\PromiseInterface;
 
-class ListOfferConfigurationCommand extends AbstractDiscordCommand
+class ListOfferConfigurationCommand extends AbstractServerDiscordCommand
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
@@ -31,7 +32,7 @@ class ListOfferConfigurationCommand extends AbstractDiscordCommand
         return "Lister les configurations d'offres";
     }
 
-    public function execute(Interaction $interaction): ?PromiseInterface
+    public function serverExecute(Interaction $interaction): ?PromiseInterface
     {
         $offerConfigurations = $this->entityManager->getRepository(OfferConfiguration::class)->findAll();
 

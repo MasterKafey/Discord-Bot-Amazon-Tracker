@@ -3,6 +3,7 @@
 namespace App\Discord\Command\OfferConfiguration;
 
 use App\Discord\Command\AbstractDiscordCommand;
+use App\Discord\Command\AbstractServerDiscordCommand;
 use App\Entity\OfferConfiguration;
 use Discord\Builders\MessageBuilder;
 use Discord\Parts\Interactions\Command\Option;
@@ -10,7 +11,7 @@ use Discord\Parts\Interactions\Interaction;
 use Doctrine\ORM\EntityManagerInterface;
 use React\Promise\PromiseInterface;
 
-class DeleteOfferConfigurationCommand extends AbstractDiscordCommand
+class DeleteOfferConfigurationCommand extends AbstractServerDiscordCommand
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager
@@ -41,7 +42,7 @@ class DeleteOfferConfigurationCommand extends AbstractDiscordCommand
         ];
     }
 
-    public function execute(Interaction $interaction): ?PromiseInterface
+    public function serverExecute(Interaction $interaction): ?PromiseInterface
     {
         $offerConfigurationId = $interaction->data->options->get('name', 'id')->value;
         $offerConfiguration = $this->entityManager->getRepository(OfferConfiguration::class)->find($offerConfigurationId);

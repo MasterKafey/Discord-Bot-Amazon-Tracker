@@ -4,12 +4,13 @@ namespace App\Discord\Command\System;
 
 use App\Business\ConfigBusiness;
 use App\Discord\Command\AbstractDiscordCommand;
+use App\Discord\Command\AbstractServerDiscordCommand;
 use Discord\Builders\MessageBuilder;
 use Discord\Parts\Interactions\Command\Option;
 use Discord\Parts\Interactions\Interaction;
 use React\Promise\PromiseInterface;
 
-class SetMinReviewCommand extends AbstractDiscordCommand
+class SetMinReviewCommand extends AbstractServerDiscordCommand
 {
     public function __construct(
         private readonly ConfigBusiness $configBusiness
@@ -40,7 +41,7 @@ class SetMinReviewCommand extends AbstractDiscordCommand
         ];
     }
 
-    public function execute(Interaction $interaction): ?PromiseInterface
+    public function serverExecute(Interaction $interaction): ?PromiseInterface
     {
         $minReviews = $interaction->data->options->get('name', 'min-review')->value;
 

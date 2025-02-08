@@ -3,6 +3,7 @@
 namespace App\Discord\Command\OfferConfiguration;
 
 use App\Discord\Command\AbstractDiscordCommand;
+use App\Discord\Command\AbstractServerDiscordCommand;
 use App\Entity\OfferConfiguration;
 use Discord\Builders\MessageBuilder;
 use Discord\Discord;
@@ -12,7 +13,7 @@ use Discord\Parts\Interactions\Interaction;
 use Doctrine\ORM\EntityManagerInterface;
 use React\Promise\PromiseInterface;
 
-class ShowCategoriesCommand extends AbstractDiscordCommand
+class ShowCategoriesCommand extends AbstractServerDiscordCommand
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
@@ -44,7 +45,7 @@ class ShowCategoriesCommand extends AbstractDiscordCommand
         return "Ajoute une categorie à la configuration d'offre";
     }
 
-    public function execute(Interaction $interaction): ?PromiseInterface
+    public function serverExecute(Interaction $interaction): ?PromiseInterface
     {
         $configurationId = $interaction->data->options->get('name', 'offer-configuration-id')->value;
         $configuration = $this->entityManager->getRepository(OfferConfiguration::class)->find($configurationId);

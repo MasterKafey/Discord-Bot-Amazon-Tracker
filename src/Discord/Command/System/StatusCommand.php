@@ -3,11 +3,12 @@
 namespace App\Discord\Command\System;
 
 use App\Discord\Command\AbstractDiscordCommand;
+use App\Discord\Command\AbstractServerDiscordCommand;
 use Discord\Builders\MessageBuilder;
 use Discord\Parts\Interactions\Interaction;
 use React\Promise\PromiseInterface;
 
-class StatusCommand extends AbstractDiscordCommand
+class StatusCommand extends AbstractServerDiscordCommand
 {
     public function getName(): string
     {
@@ -19,7 +20,7 @@ class StatusCommand extends AbstractDiscordCommand
         return 'Obtenir le statut du bot';
     }
 
-    public function execute(Interaction $interaction): ?PromiseInterface
+    public function serverExecute(Interaction $interaction): ?PromiseInterface
     {
         return $interaction->respondWithMessage(MessageBuilder::new()->setContent("Je suis actuellement en ligne"));
     }
